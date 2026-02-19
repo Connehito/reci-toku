@@ -1,5 +1,5 @@
 {
-  "name": "receipt-reward",
+  "name": "reci-toku",
   "private": true,
   "scripts": {
     "dev": "turbo run dev",

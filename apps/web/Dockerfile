@@ -18,29 +18,22 @@ COPY --from=deps /app/apps/web/node_modules ./apps/web/node_modules
 COPY turbo.json ./
 COPY apps/web ./apps/web
 
-# Next.jsテレメトリーを無効化
-ENV NEXT_TELEMETRY_DISABLED=1
-
+# Viteビルド
 RUN pnpm turbo run build --filter=web
 
-# Stage 4: Runner
-FROM node:20-alpine AS runner
-WORKDIR /app
-
-ENV NODE_ENV=production
-ENV NEXT_TELEMETRY_DISABLED=1
+# Stage 4: Runner (Nginx)
+FROM nginx:alpine AS runner
 
 # 非rootユーザーで実行（セキュリティ）
 RUN addgroup --system --gid 1001 nodejs && \
-    adduser --system --uid 1001 nextjs
+    adduser --system --uid 1001 webuser
 
-USER nextjs
+# ビルド成果物をNginxの公開ディレクトリにコピー
+COPY --from=builder --chown=webuser:nodejs /app/apps/web/dist /usr/share/nginx/html
 
-# Next.js standaloneビルドをコピー
-COPY --from=builder --chown=nextjs:nodejs /app/apps/web/.next/standalone ./
-COPY --from=builder --chown=nextjs:nodejs /app/apps/web/.next/static ./.next/static
-COPY --from=builder --chown=nextjs:nodejs /app/apps/web/public ./public
+# Nginx設定ファイルをコピー（必要に応じて作成）
+# COPY apps/web/nginx.conf /etc/nginx/conf.d/default.conf
 
-EXPOSE 3000
+EXPOSE 80
 
-CMD ["node", "server.js"]
+CMD ["nginx", "-g", "daemon off;"]

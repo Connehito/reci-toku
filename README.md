@@ -1,6 +1,6 @@
-# レシートリワード - ローカル開発環境
+# レシトク（reci-toku）- ローカル開発環境
 
-pnpm、Turborepo、Nest.js、Next.jsを使用したレシートリワードシステムのモノリポ構成です。
+pnpm、Turborepo、Nest.js、React (Vite)を使用したレシートリワードシステムのモノリポ構成です。
 
 **プロジェクト管理**: https://github.com/orgs/Connehito/projects/50
 
@@ -14,10 +14,10 @@ pnpm、Turborepo、Nest.js、Next.jsを使用したレシートリワードシ�
 ## プロジェクト構成
 
 ```
-receipt-reward/
+reci-toku/
 ├── apps/
 │   ├── api/          # Nest.js API（ポート: 3001）
-│   └── web/          # Next.jsフロントエンド（ポート: 3000）
+│   └── web/          # React + Vite SPA（ポート: 3000）
 ├── packages/
 │   ├── config/       # 共通TypeScript設定
 │   └── shared/       # 共通ユーティリティ（プレースホルダー）
@@ -108,7 +108,7 @@ docker compose up -d --build
 - **ヘルスチェック**: http://localhost:3001/health
 
 正常に起動すると：
-- フロントエンド: "Hello World from Next.js!" が表示される
+- フロントエンド: React SPAのホーム画面が表示される
 - API: "Hello World from Nest.js API!" が表示される
 - ヘルスチェック: `{"status":"ok","timestamp":"..."}` が返される
 
@@ -150,7 +150,7 @@ pnpm build
 
 ファイルを編集すると自動的に反映されます：
 - `apps/api/src/main.ts` → APIが自動再起動
-- `apps/web/src/app/page.tsx` → ブラウザが自動更新
+- `apps/web/src/pages/Home.tsx` → ブラウザが自動更新（Vite HMR）
 
 ## トラブルシューティング
 
@@ -205,7 +205,7 @@ docker compose up
 
 - **モノリポ**: Turborepo 1.x + pnpm workspaces
 - **バックエンド**: Nest.js 10.x（TypeScript）+ TypeORM
-- **フロントエンド**: Next.js 14.x（App Router、TypeScript）
+- **フロントエンド**: React 18.x + Vite（SPA、TypeScript）
 - **データベース**: MySQL 8.0（mamariq DB、マイグレーションはRidgepole管理）
 - **キャッシュ**: Redis 7
 - **コンテナ**: Docker & Docker Compose

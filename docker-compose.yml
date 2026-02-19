@@ -5,7 +5,7 @@ services:
     build:
       context: .
       dockerfile: apps/api/Dockerfile.dev
-    container_name: receipt-reward-api
+    container_name: reci-toku-api
     ports:
       - '3001:3000'
     volumes:
@@ -26,17 +26,16 @@ services:
     build:
       context: .
       dockerfile: apps/web/Dockerfile.dev
-    container_name: receipt-reward-web
+    container_name: reci-toku-web
     ports:
       - '3000:3000'
     volumes:
       - .:/app
       - /app/node_modules
       - /app/apps/web/node_modules
-      - /app/apps/web/.next
     environment:
       NODE_ENV: development
-      NEXT_PUBLIC_API_URL: http://localhost:3001
+      VITE_API_URL: http://localhost:3001
     depends_on:
       - api
 
