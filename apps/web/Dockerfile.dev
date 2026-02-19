@@ -1,0 +1,20 @@
+FROM node:20-alpine
+
+WORKDIR /app
+
+# Install pnpm
+RUN npm install -g pnpm@8.15.0
+
+# Copy workspace files
+COPY pnpm-workspace.yaml package.json pnpm-lock.yaml* ./
+COPY packages ./packages
+
+# Copy web app files
+COPY apps/web ./apps/web
+
+# Install dependencies
+RUN pnpm install
+
+EXPOSE 3000
+
+CMD ["pnpm", "--filter", "web", "dev"]
