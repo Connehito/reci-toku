@@ -73,6 +73,15 @@ export class CampaignSchema {
   })
   serviceType!: string;
 
+  @Column({
+    type: 'varchar',
+    length: 500,
+    nullable: true,
+    name: 'campaign_detail_url',
+    comment: 'キャンペーン詳細URL',
+  })
+  campaignDetailUrl!: string | null;
+
   // ========================================
   // WED/ONE追加情報（MissionDetail由来、将来のAPI連携用）
   // ========================================

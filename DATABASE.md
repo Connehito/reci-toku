@@ -356,6 +356,7 @@ CREATE TABLE reci_toku_user_coins (
 | `company_id` | VARCHAR(36) | - | 主催企業UUID |
 | `incentive_points` | INT | NOT NULL | 付与ポイント数 |
 | `service_type` | VARCHAR(20) | NOT NULL | サービス種別（receipt/mission） |
+| `campaign_detail_url` | VARCHAR(500) | - | キャンペーン詳細URL |
 | **WED/ONE追加情報（MissionDetail由来、将来のAPI連携用）** |
 | `is_all_receipt_campaign` | TINYINT | Default: 0 | 全種類（なんでも）レシートか否か（0:特定商品, 1:なんでもOK） |
 | `mission_type` | VARCHAR(20) | - | ミッション種別（campaign:通常, group:グループ） |
@@ -412,6 +413,7 @@ CREATE TABLE reci_toku_campaigns (
   company_id VARCHAR(36) COMMENT '主催企業UUID',
   incentive_points INT NOT NULL COMMENT '付与ポイント数',
   service_type VARCHAR(20) NOT NULL COMMENT 'サービス種別（receipt:なんでもレシート, mission:ミッション）',
+  campaign_detail_url VARCHAR(500) COMMENT 'キャンペーン詳細URL',
 
   -- WED/ONE追加情報（MissionDetail由来、将来のAPI連携用）
   is_all_receipt_campaign TINYINT DEFAULT 0 COMMENT '全種類（なんでも）レシートか否か（0:特定商品, 1:なんでもOK）',
