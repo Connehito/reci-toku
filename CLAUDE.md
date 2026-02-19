@@ -86,7 +86,8 @@ git commit -m "feat: Implement receipt creation API"
 - **React Router** - ルーティング（予定）
 
 ### インフラ
-- **AWS ECS** - コンテナオーケストレーション
+- **Frontend配信**: CloudFront + S3（静的ファイル配信）
+- **Backend API**: AWS ECS Fargate + ALB（コンテナオーケストレーション）
 - **AWS RDS** - マネージドMySQL
 - **AWS ElastiCache** - マネージドRedis
 - **AWS Secrets Manager** - シークレット管理

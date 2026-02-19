@@ -39,7 +39,7 @@
 | 観点 | 方針 | 理由 |
 | --- | --- | --- |
 | **コード管理** | モノリポ（Turborepo + pnpm） | 型共有、原子的な変更、開発体験向上 |
-| **デプロイ** | 独立（ECS Task別々） | スケーリング独立性、障害隔離 |
+| **デプロイ** | 独立（Frontend: CloudFront + S3、Backend: ECS Fargate） | スケーリング独立性、障害隔離、コスト最適化 |
 | **型定義** | `packages/shared` で一元管理 | API契約の整合性保証 |
 | **ビルド** | Turborepo でキャッシュ最適化 | 変更があったアプリのみビルド |
 | **テスト** | E2Eはモノリポで統合実行 | 両サービス同時起動が容易 |
@@ -57,8 +57,6 @@ graph TB
     subgraph "モノリポ: reci-toku"
         subgraph "apps/web: Frontend (React SPA)"
             WebView[WebView<br/>レシートリワード画面<br/>CSR]
-            ALB_Front[ALB Frontend]
-            ECS_Front[ECS Task<br/>Nginx + 静的ファイル]
         end
 
         subgraph "apps/api: Backend API (Nest.js + TypeORM)"
@@ -81,6 +79,11 @@ graph TB
         ECS_Admin[ECS Task<br/>CakePHP]
     end
 
+    subgraph "AWS CDN & ストレージ"
+        CloudFront[CloudFront<br/>グローバルCDN]
+        S3[S3 Bucket<br/>静的ファイル配信]
+    end
+
     subgraph "データ層"
         RDS[(MySQL 8<br/>mamariq DB)]
         Cache[Redis<br/>セッション・キャッシュ]
@@ -98,14 +101,14 @@ graph TB
 
     User --> App
     App --> WebView
-    WebView --> ALB_Front
-    ALB_Front --> ECS_Front
+    WebView --> CloudFront
+    CloudFront --> S3
 
     CS --> AdminUI
     AdminUI --> ALB_Admin
     ALB_Admin --> ECS_Admin
 
-    ECS_Front -->|API呼び出し| ALB_API
+    CloudFront -->|API呼び出し| ALB_API
     ECS_Admin -->|API呼び出し| ALB_API
 
     ALB_API --> ECS_API
@@ -132,8 +135,9 @@ graph TB
     WebhookAPI -.将来.-> DotMoney
 
     ECS_API --> CloudWatch
-    ECS_Front --> CloudWatch
     ECS_Admin --> CloudWatch
+    S3 --> CloudWatch
+    CloudFront --> CloudWatch
 ```
 
 **図の説明**:
@@ -141,6 +145,8 @@ graph TB
 - **ユーザー層**: エンドユーザー、CS担当者、ママリアプリ
 - **モノリポ**: apps/api（Backend）とapps/web（Frontend）をTurborepo + pnpmで管理
 - **型共有**: packages/sharedで型定義を一元管理、Frontend/Backend両方から参照
+- **Frontend配信**: CloudFront + S3でグローバルエッジ配信（ECSタスク不要）
+- **Backend API**: ALB + ECS Fargateでコンテナ実行
 - **別リポジトリ**: 管理画面は既存CakePHPを使用（独立デプロイ）
 - **データ層**: MySQL 8（既存mamariq DB）、Redis（キャッシュ・セッション）
 - **外部連携**: Performance Media Network API（Webhook経由）、将来的にドットマネーAPI
@@ -828,16 +834,40 @@ export class RateLimitGuard implements CanActivate {
 - Environment: NODE_ENV=production
 - Secrets: DB_PASSWORD（Secrets Manager）
 
-**Frontend Task**:
-- Image: `reci-toku-web:latest`（Nginx + 静的ファイル）
-- Port: 80
-- Environment: VITE_API_URL=https://api.internal.mamari.jp
+### CloudFront + S3 構成（Frontend）
+
+**S3 Bucket**:
+- Bucket名: `reci-toku-frontend-{env}` (例: `reci-toku-frontend-prd`)
+- 静的ファイル: Viteビルド成果物（`dist/`ディレクトリ）
+- アクセス制御: CloudFront経由のみ（OAI/OAC設定）
+- バケットポリシー: CloudFrontのみ読み取り許可
+
+**CloudFront Distribution**:
+- Origin: S3 Bucket（OAC経由）
+- Behavior: SPA用（全てindex.htmlにフォールバック）
+- Cache Policy: CachingOptimized（静的ファイル用）
+- Custom Error Responses: 403/404 → 200 index.html（React Router対応）
+- SSL Certificate: ACM証明書
+- Domain: `reci-toku.{env}.mamari.jp`
+- Logging: S3バケットに保存
+
+**メリット**:
+- ✅ コスト削減: ECSタスク常時稼働が不要
+- ✅ グローバル配信: エッジロケーションからの高速配信
+- ✅ 自動スケール: トラフィック増加に自動対応
+- ✅ 高可用性: AWS CloudFrontの99.9% SLA
 
 ### デプロイ戦略
 
+**Backend API**:
 - **Blue/Green Deployment**: CodeDeployによる段階的切り替え
 - **ヘルスチェック**: ALBで `/health` エンドポイントを監視
 - **ロールバック**: 自動（ヘルスチェック失敗時）
+
+**Frontend (React SPA)**:
+- **S3アップロード**: `aws s3 sync dist/ s3://reci-toku-frontend-{env}/`
+- **CloudFront Invalidation**: `aws cloudfront create-invalidation --paths "/*"`
+- **ロールバック**: S3の前バージョンに戻してInvalidation実行
 
 ## CI/CD パイプライン
 
@@ -917,8 +947,30 @@ jobs:
       - run: pnpm install
       - run: pnpm turbo run build --filter=web
       - run: pnpm turbo run test --filter=web
-      # Docker build & push to ECR
-      # ECS deploy
+
+      # S3にデプロイ
+      - name: Configure AWS credentials
+        uses: aws-actions/configure-aws-credentials@v2
+        with:
+          role-to-assume: ${{ secrets.AWS_ROLE_ARN }}
+          aws-region: ap-northeast-1
+
+      - name: Deploy to S3
+        run: |
+          aws s3 sync apps/web/dist/ s3://reci-toku-frontend-${{ env.ENVIRONMENT }}/ \
+            --delete \
+            --cache-control "public,max-age=31536000,immutable" \
+            --exclude "index.html"
+
+          # index.htmlはキャッシュしない
+          aws s3 cp apps/web/dist/index.html s3://reci-toku-frontend-${{ env.ENVIRONMENT }}/index.html \
+            --cache-control "public,max-age=0,must-revalidate"
+
+      - name: CloudFront Invalidation
+        run: |
+          aws cloudfront create-invalidation \
+            --distribution-id ${{ secrets.CLOUDFRONT_DISTRIBUTION_ID }} \
+            --paths "/*"
 ```
 
 ---
