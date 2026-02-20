@@ -11,7 +11,7 @@ describe('CoinController', () => {
   beforeEach(async () => {
     mockGetCoinBalanceUseCase = {
       execute: jest.fn(),
-    } as any;
+    } as unknown as jest.Mocked<GetCoinBalanceUseCase>;
 
     const module: TestingModule = await Test.createTestingModule({
       controllers: [CoinController],

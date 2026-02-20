@@ -3,6 +3,7 @@ import { GetCoinBalanceUseCase } from './get-coin-balance.usecase';
 import { TOKENS } from '../../domain/tokens';
 import { RepositoryMockFactory } from '../../__test__/factories/repository.mock.factory';
 import { EntityFactory } from '../../__test__/factories/entity.factory';
+import { CoinSetting } from '../../domain/entities/coin-setting.entity';
 
 // uuidをモック
 jest.mock('uuid', () => ({
@@ -54,7 +55,7 @@ describe('GetCoinBalanceUseCase', () => {
 
       const coinSetting = {
         getValueAsNumber: jest.fn().mockReturnValue(180),
-      } as any;
+      } as unknown as CoinSetting;
 
       mockUserCoinRepository.findByUserId.mockResolvedValue(userCoin);
       mockCoinSettingRepository.findByKey.mockResolvedValue(coinSetting);
@@ -99,7 +100,7 @@ describe('GetCoinBalanceUseCase', () => {
 
       const coinSetting = {
         getValueAsNumber: jest.fn().mockReturnValue(180),
-      } as any;
+      } as unknown as CoinSetting;
 
       mockUserCoinRepository.findByUserId.mockResolvedValue(userCoin);
       mockCoinSettingRepository.findByKey.mockResolvedValue(coinSetting);
