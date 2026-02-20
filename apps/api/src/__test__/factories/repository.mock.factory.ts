@@ -40,6 +40,7 @@ export class RepositoryMockFactory {
       findByUserId: jest.fn(),
       findByUserIdAndType: jest.fn(),
       findByRewardId: jest.fn(),
+      findByUserIdWithPagination: jest.fn(),
       save: jest.fn(),
     };
   }
