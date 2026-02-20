@@ -60,7 +60,7 @@ describe('WebhookController', () => {
       expect(mockProcessWebhookUseCase.execute).toHaveBeenCalledTimes(1);
     });
 
-    it('重複ペイロードで200 OKとalready_processedを返す', async () => {
+    it('重複ペイロード（Application層チェック）で200 OKとalready_processedを返す', async () => {
       // Arrange
       const payload: WebhookPayloadDto = {
         media_id: 'test_001',
@@ -76,6 +76,32 @@ describe('WebhookController', () => {
       mockProcessWebhookUseCase.execute.mockRejectedValue(
         new Error('ALREADY_PROCESSED'),
       );
+
+      // Act
+      const response = await controller.handleWebhook(payload);
+
+      // Assert
+      expect(response).toEqual({ status: 'already_processed' });
+      expect(mockProcessWebhookUseCase.execute).toHaveBeenCalledWith(payload);
+    });
+
+    it('重複ペイロード（DB制約エラー）で200 OKとalready_processedを返す', async () => {
+      // Arrange
+      const payload: WebhookPayloadDto = {
+        media_id: 'test_001',
+        media_user_code: '12345',
+        media_cashback_id: 'unique_001',
+        media_cashback_code: '123456789012345',
+        receipt_campaign_id: 'campaign_001',
+        incentive_points: 100,
+        participation_at: '2026-02-20T10:00:00Z',
+        processed_at: '2026-02-20T10:00:00Z',
+      } as WebhookPayloadDto;
+
+      // MySQL UNIQUE制約違反エラーをシミュレート
+      const duplicateError: any = new Error('Duplicate entry');
+      duplicateError.code = 'ER_DUP_ENTRY';
+      mockProcessWebhookUseCase.execute.mockRejectedValue(duplicateError);
 
       // Act
       const response = await controller.handleWebhook(payload);

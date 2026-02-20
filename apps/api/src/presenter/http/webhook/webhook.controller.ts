@@ -48,10 +48,23 @@ export class WebhookController {
 
       return { status: 'success' };
     } catch (error) {
-      // べき等性: 既に処理済みの場合は200 OKを返す（リトライさせない）
+      // べき等性（Application層チェック）: 既に処理済みの場合は200 OKを返す（リトライさせない）
       if (error instanceof Error && error.message === 'ALREADY_PROCESSED') {
         this.logger.warn(
-          `重複したWebhookを受信: cashbackId=${payload.media_cashback_id}`,
+          `重複したWebhookを受信（Application層）: cashbackId=${payload.media_cashback_id}`,
+        );
+        return { status: 'already_processed' };
+      }
+
+      // べき等性（DB制約チェック）: UNIQUE制約違反の場合は200 OKを返す（レースコンディション対策）
+      if (
+        error &&
+        typeof error === 'object' &&
+        'code' in error &&
+        (error.code === 'ER_DUP_ENTRY' || error.code === '23505')
+      ) {
+        this.logger.warn(
+          `重複したWebhookを受信（DB制約）: cashbackId=${payload.media_cashback_id}`,
         );
         return { status: 'already_processed' };
       }

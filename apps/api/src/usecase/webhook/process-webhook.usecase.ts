@@ -96,7 +96,7 @@ export class ProcessWebhookUseCase {
         incentivePoints: payload.incentive_points,
         participationAt: new Date(payload.participation_at),
         processedAt: new Date(payload.processed_at),
-        jwePayload: payload.jwe_payload || JSON.stringify(payload),
+        jwePayload: JSON.stringify(payload), // 万が一のために常に全データを保存
       });
       await this.rewardRepository.save(reward);
 
