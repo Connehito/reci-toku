@@ -26,7 +26,7 @@ export class ServiceMockFactory {
 
   static createTransactionManagerMock(): jest.Mocked<ITransactionManager> {
     return {
-      execute: jest.fn().mockImplementation(<T,>(work: () => Promise<T>) => work()),
+      execute: jest.fn().mockImplementation(<T>(work: () => Promise<T>) => work()),
     } as jest.Mocked<ITransactionManager>;
   }
 }

@@ -10,11 +10,7 @@ export interface IEncryptionService {
    * @param encryptionKey - Base64エンコードされた暗号化鍵
    * @returns JWEトークン（文字列）
    */
-  encryptJWE(
-    payload: object,
-    clientId: string,
-    encryptionKey: string,
-  ): Promise<string>;
+  encryptJWE(payload: object, clientId: string, encryptionKey: string): Promise<string>;
 
   /**
    * JWE形式の暗号化データを復号化
