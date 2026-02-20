@@ -16,7 +16,7 @@ describe('WebhookController', () => {
   beforeEach(async () => {
     mockProcessWebhookUseCase = {
       execute: jest.fn(),
-    } as any;
+    } as unknown as jest.Mocked<ProcessWebhookUseCase>;
 
     const module: TestingModule = await Test.createTestingModule({
       controllers: [WebhookController],
@@ -97,7 +97,7 @@ describe('WebhookController', () => {
       } as WebhookPayloadDto;
 
       // MySQL UNIQUE制約違反エラーをシミュレート
-      const duplicateError: any = new Error('Duplicate entry');
+      const duplicateError = new Error('Duplicate entry') as Error & { code: string };
       duplicateError.code = 'ER_DUP_ENTRY';
       mockProcessWebhookUseCase.execute.mockRejectedValue(duplicateError);
 
