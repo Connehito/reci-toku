@@ -92,14 +92,10 @@ describe('CoinController', () => {
     it('不正なユーザーIDの場合はBadRequestExceptionをスローする', async () => {
       // Arrange
       const userId = 0;
-      mockGetCoinBalanceUseCase.execute.mockRejectedValue(
-        new Error('不正なユーザーIDです'),
-      );
+      mockGetCoinBalanceUseCase.execute.mockRejectedValue(new Error('不正なユーザーIDです'));
 
       // Act & Assert
-      await expect(controller.getBalance(userId)).rejects.toThrow(
-        BadRequestException,
-      );
+      await expect(controller.getBalance(userId)).rejects.toThrow(BadRequestException);
       expect(mockGetCoinBalanceUseCase.execute).toHaveBeenCalledWith(userId);
     });
 
@@ -110,9 +106,7 @@ describe('CoinController', () => {
       mockGetCoinBalanceUseCase.execute.mockRejectedValue(mockError);
 
       // Act & Assert
-      await expect(controller.getBalance(userId)).rejects.toThrow(
-        'Database connection failed',
-      );
+      await expect(controller.getBalance(userId)).rejects.toThrow('Database connection failed');
       expect(mockGetCoinBalanceUseCase.execute).toHaveBeenCalledWith(userId);
     });
   });

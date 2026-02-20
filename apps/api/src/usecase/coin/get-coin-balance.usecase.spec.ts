@@ -11,18 +11,14 @@ jest.mock('uuid', () => ({
 
 describe('GetCoinBalanceUseCase', () => {
   let useCase: GetCoinBalanceUseCase;
-  let mockUserCoinRepository: ReturnType<
-    typeof RepositoryMockFactory.createUserCoinRepositoryMock
-  >;
+  let mockUserCoinRepository: ReturnType<typeof RepositoryMockFactory.createUserCoinRepositoryMock>;
   let mockCoinSettingRepository: ReturnType<
     typeof RepositoryMockFactory.createCoinSettingRepositoryMock
   >;
 
   beforeEach(async () => {
-    mockUserCoinRepository =
-      RepositoryMockFactory.createUserCoinRepositoryMock();
-    mockCoinSettingRepository =
-      RepositoryMockFactory.createCoinSettingRepositoryMock();
+    mockUserCoinRepository = RepositoryMockFactory.createUserCoinRepositoryMock();
+    mockCoinSettingRepository = RepositoryMockFactory.createCoinSettingRepositoryMock();
 
     const module: TestingModule = await Test.createTestingModule({
       providers: [
@@ -71,9 +67,7 @@ describe('GetCoinBalanceUseCase', () => {
       expect(result.lastEarnedAt).toBe('2026-02-20T10:00:00.000Z');
       expect(result.expiresAt).toBe('2026-08-19T10:00:00.000Z'); // 180日後
       expect(mockUserCoinRepository.findByUserId).toHaveBeenCalledWith(userId);
-      expect(mockCoinSettingRepository.findByKey).toHaveBeenCalledWith(
-        'coin_expire_days',
-      );
+      expect(mockCoinSettingRepository.findByKey).toHaveBeenCalledWith('coin_expire_days');
     });
 
     it('初回獲得前のユーザーは残高0、有効期限nullを返す', async () => {
@@ -145,9 +139,7 @@ describe('GetCoinBalanceUseCase', () => {
       const userId = 0;
 
       // Act & Assert
-      await expect(useCase.execute(userId)).rejects.toThrow(
-        '不正なユーザーIDです',
-      );
+      await expect(useCase.execute(userId)).rejects.toThrow('不正なユーザーIDです');
       expect(mockUserCoinRepository.findByUserId).not.toHaveBeenCalled();
     });
 
@@ -156,9 +148,7 @@ describe('GetCoinBalanceUseCase', () => {
       const userId = -1;
 
       // Act & Assert
-      await expect(useCase.execute(userId)).rejects.toThrow(
-        '不正なユーザーIDです',
-      );
+      await expect(useCase.execute(userId)).rejects.toThrow('不正なユーザーIDです');
       expect(mockUserCoinRepository.findByUserId).not.toHaveBeenCalled();
     });
   });

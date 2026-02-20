@@ -51,8 +51,7 @@ export class GetCoinBalanceUseCase {
     }
 
     // 有効期限日数取得（CoinSettingから）
-    const expireDaysSetting =
-      await this.coinSettingRepository.findByKey('coin_expire_days');
+    const expireDaysSetting = await this.coinSettingRepository.findByKey('coin_expire_days');
     const expireDays = expireDaysSetting
       ? expireDaysSetting.getValueAsNumber()
       : this.DEFAULT_EXPIRE_DAYS;
