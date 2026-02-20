@@ -12,24 +12,17 @@ describe('TypeOrmTransactionManager', () => {
     } as any;
 
     const module: TestingModule = await Test.createTestingModule({
-      providers: [
-        TypeOrmTransactionManager,
-        { provide: DataSource, useValue: mockDataSource },
-      ],
+      providers: [TypeOrmTransactionManager, { provide: DataSource, useValue: mockDataSource }],
     }).compile();
 
-    service = module.get<TypeOrmTransactionManager>(
-      TypeOrmTransactionManager,
-    );
+    service = module.get<TypeOrmTransactionManager>(TypeOrmTransactionManager);
   });
 
   describe('execute', () => {
     it('正常にトランザクション内で処理を実行できる', async () => {
       // Arrange
       const mockWork = jest.fn().mockResolvedValue('success');
-      mockDataSource.transaction.mockImplementation(
-        async (work: any) => await work(),
-      );
+      mockDataSource.transaction.mockImplementation(async (work: any) => await work());
 
       // Act
       const result = await service.execute(mockWork);
@@ -62,9 +55,7 @@ describe('TypeOrmTransactionManager', () => {
         await operation2();
         return 'completed';
       });
-      mockDataSource.transaction.mockImplementation(
-        async (work: any) => await work(),
-      );
+      mockDataSource.transaction.mockImplementation(async (work: any) => await work());
 
       // Act
       const result = await service.execute(mockWork);
@@ -83,9 +74,7 @@ describe('TypeOrmTransactionManager', () => {
       }
       const expectedResult: TestResult = { id: 1, name: 'test' };
       const mockWork = jest.fn().mockResolvedValue(expectedResult);
-      mockDataSource.transaction.mockImplementation(
-        async (work: any) => await work(),
-      );
+      mockDataSource.transaction.mockImplementation(async (work: any) => await work());
 
       // Act
       const result = await service.execute<TestResult>(mockWork);

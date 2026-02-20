@@ -20,10 +20,6 @@ import { TypeOrmTransactionManager } from '../infrastructure/services/typeorm-tr
       useClass: TypeOrmTransactionManager,
     },
   ],
-  exports: [
-    TOKENS.ISecretsService,
-    TOKENS.IEncryptionService,
-    TOKENS.ITransactionManager,
-  ],
+  exports: [TOKENS.ISecretsService, TOKENS.IEncryptionService, TOKENS.ITransactionManager],
 })
 export class InfrastructureModule {}
