@@ -10,7 +10,7 @@ describe('AuthController', () => {
   beforeEach(async () => {
     mockGenerateJweTokenUseCase = {
       execute: jest.fn(),
-    } as any;
+    } as unknown as jest.Mocked<GenerateJweTokenUseCase>;
 
     const module: TestingModule = await Test.createTestingModule({
       controllers: [AuthController],
