@@ -54,6 +54,24 @@ export class CoinTransactionRepository implements ICoinTransactionRepository {
     return schema ? CoinTransactionMapper.toDomain(schema) : null;
   }
 
+  async findByUserIdWithPagination(
+    userId: number,
+    limit: number,
+    offset: number,
+  ): Promise<{ transactions: CoinTransaction[]; total: number }> {
+    const [schemas, total] = await this.coinTransactionSchemaRepository.findAndCount({
+      where: { userId },
+      order: { createdAt: 'DESC' },
+      take: limit,
+      skip: offset,
+    });
+
+    return {
+      transactions: CoinTransactionMapper.toDomainList(schemas),
+      total,
+    };
+  }
+
   async save(transaction: CoinTransaction): Promise<void> {
     const schema = CoinTransactionMapper.toSchema(transaction);
     await this.coinTransactionSchemaRepository.save(schema);
