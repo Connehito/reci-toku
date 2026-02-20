@@ -5,6 +5,7 @@ import { DatabaseModule } from './database/database.module';
 import { InfrastructureModule } from './modules/infrastructure.module';
 import { RepositoryModule } from './modules/repository.module';
 import { AuthModule } from './modules/auth.module';
+import { WebhookModule } from './modules/webhook.module';
 
 @Controller()
 class AppController {
@@ -21,6 +22,7 @@ class AppController {
     InfrastructureModule, // Infrastructure Serviceを全体で利用可能にする
     RepositoryModule, // Repository実装を全体で利用可能にする
     AuthModule, // 認証API
+    WebhookModule, // Webhook受信API
   ],
   controllers: [AppController],
 })
