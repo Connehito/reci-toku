@@ -13,7 +13,7 @@ describe('AwsSecretsService', () => {
     // モッククライアントの作成
     mockSecretsManagerClient = {
       send: jest.fn() as jest.Mock,
-    } as any;
+    } as unknown as jest.Mocked<SecretsManagerClient>;
 
     // SecretsManagerClientのコンストラクタをモック
     (SecretsManagerClient as jest.Mock).mockImplementation(() => {
