@@ -25,4 +25,7 @@ module.exports = {
   moduleNameMapper: {
     '^src/(.*)$': '<rootDir>/src/$1',
   },
+  transformIgnorePatterns: [
+    'node_modules/(?!(jose)/)', // joseライブラリをトランスパイル対象に含める
+  ],
 };
