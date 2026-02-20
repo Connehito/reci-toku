@@ -68,9 +68,7 @@ export class ProcessWebhookUseCase {
       payload.media_cashback_id,
     );
     if (existingReward) {
-      this.logger.warn(
-        `重複したWebhookを検出: cashbackId=${payload.media_cashback_id}`,
-      );
+      this.logger.warn(`重複したWebhookを検出: cashbackId=${payload.media_cashback_id}`);
       throw new Error('ALREADY_PROCESSED');
     }
 

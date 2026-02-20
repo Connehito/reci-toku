@@ -73,9 +73,7 @@ describe('WebhookController', () => {
         processed_at: '2026-02-20T10:00:00Z',
       } as WebhookPayloadDto;
 
-      mockProcessWebhookUseCase.execute.mockRejectedValue(
-        new Error('ALREADY_PROCESSED'),
-      );
+      mockProcessWebhookUseCase.execute.mockRejectedValue(new Error('ALREADY_PROCESSED'));
 
       // Act
       const response = await controller.handleWebhook(payload);
@@ -129,9 +127,7 @@ describe('WebhookController', () => {
       );
 
       // Act & Assert
-      await expect(controller.handleWebhook(payload)).rejects.toThrow(
-        BadRequestException,
-      );
+      await expect(controller.handleWebhook(payload)).rejects.toThrow(BadRequestException);
       expect(mockProcessWebhookUseCase.execute).toHaveBeenCalledWith(payload);
     });
 
@@ -152,9 +148,7 @@ describe('WebhookController', () => {
       mockProcessWebhookUseCase.execute.mockRejectedValue(mockError);
 
       // Act & Assert
-      await expect(controller.handleWebhook(payload)).rejects.toThrow(
-        'Database connection failed',
-      );
+      await expect(controller.handleWebhook(payload)).rejects.toThrow('Database connection failed');
       expect(mockProcessWebhookUseCase.execute).toHaveBeenCalledWith(payload);
     });
 
@@ -175,9 +169,7 @@ describe('WebhookController', () => {
       mockProcessWebhookUseCase.execute.mockRejectedValue(mockError);
 
       // Act & Assert
-      await expect(controller.handleWebhook(payload)).rejects.toThrow(
-        'Transaction failed',
-      );
+      await expect(controller.handleWebhook(payload)).rejects.toThrow('Transaction failed');
     });
   });
 });

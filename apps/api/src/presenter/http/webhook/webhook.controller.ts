@@ -21,9 +21,7 @@ import { WebhookPayloadDto } from '../../../usecase/webhook/dto/webhook-payload.
 export class WebhookController {
   private readonly logger = new Logger(WebhookController.name);
 
-  constructor(
-    private readonly processWebhookUseCase: ProcessWebhookUseCase,
-  ) {}
+  constructor(private readonly processWebhookUseCase: ProcessWebhookUseCase) {}
 
   /**
    * Webhook受信
@@ -70,14 +68,8 @@ export class WebhookController {
       }
 
       // キャンペーン未登録: 400 Bad Request（リトライさせない）
-      if (
-        error instanceof Error &&
-        error.message.startsWith('キャンペーンが未登録です')
-      ) {
-        this.logger.error(
-          `キャンペーン未登録: ${error.message}`,
-          error.stack,
-        );
+      if (error instanceof Error && error.message.startsWith('キャンペーンが未登録です')) {
+        this.logger.error(`キャンペーン未登録: ${error.message}`, error.stack);
         throw new BadRequestException('キャンペーンが未登録です');
       }
 

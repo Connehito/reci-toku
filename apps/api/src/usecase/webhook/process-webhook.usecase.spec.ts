@@ -13,33 +13,21 @@ jest.mock('uuid', () => ({
 
 describe('ProcessWebhookUseCase', () => {
   let useCase: ProcessWebhookUseCase;
-  let mockRewardRepository: ReturnType<
-    typeof RepositoryMockFactory.createRewardRepositoryMock
-  >;
-  let mockUserCoinRepository: ReturnType<
-    typeof RepositoryMockFactory.createUserCoinRepositoryMock
-  >;
+  let mockRewardRepository: ReturnType<typeof RepositoryMockFactory.createRewardRepositoryMock>;
+  let mockUserCoinRepository: ReturnType<typeof RepositoryMockFactory.createUserCoinRepositoryMock>;
   let mockCoinTransactionRepository: ReturnType<
     typeof RepositoryMockFactory.createCoinTransactionRepositoryMock
   >;
-  let mockCampaignRepository: ReturnType<
-    typeof RepositoryMockFactory.createCampaignRepositoryMock
-  >;
-  let mockTransactionManager: ReturnType<
-    typeof ServiceMockFactory.createTransactionManagerMock
-  >;
+  let mockCampaignRepository: ReturnType<typeof RepositoryMockFactory.createCampaignRepositoryMock>;
+  let mockTransactionManager: ReturnType<typeof ServiceMockFactory.createTransactionManagerMock>;
 
   beforeEach(async () => {
     // モックリポジトリの作成
     mockRewardRepository = RepositoryMockFactory.createRewardRepositoryMock();
-    mockUserCoinRepository =
-      RepositoryMockFactory.createUserCoinRepositoryMock();
-    mockCoinTransactionRepository =
-      RepositoryMockFactory.createCoinTransactionRepositoryMock();
-    mockCampaignRepository =
-      RepositoryMockFactory.createCampaignRepositoryMock();
-    mockTransactionManager =
-      ServiceMockFactory.createTransactionManagerMock();
+    mockUserCoinRepository = RepositoryMockFactory.createUserCoinRepositoryMock();
+    mockCoinTransactionRepository = RepositoryMockFactory.createCoinTransactionRepositoryMock();
+    mockCampaignRepository = RepositoryMockFactory.createCampaignRepositoryMock();
+    mockTransactionManager = ServiceMockFactory.createTransactionManagerMock();
 
     const module: TestingModule = await Test.createTestingModule({
       providers: [
@@ -98,9 +86,7 @@ describe('ProcessWebhookUseCase', () => {
         balance: 50,
       });
 
-      mockCampaignRepository.findByReceiptCampaignId.mockResolvedValue(
-        campaign,
-      );
+      mockCampaignRepository.findByReceiptCampaignId.mockResolvedValue(campaign);
       mockRewardRepository.findByMediaCashbackId.mockResolvedValue(null); // 重複なし
       mockUserCoinRepository.findByUserId.mockResolvedValue(userCoin);
 
@@ -108,12 +94,8 @@ describe('ProcessWebhookUseCase', () => {
       await useCase.execute(payload);
 
       // Assert
-      expect(
-        mockCampaignRepository.findByReceiptCampaignId,
-      ).toHaveBeenCalledWith('campaign_001');
-      expect(mockRewardRepository.findByMediaCashbackId).toHaveBeenCalledWith(
-        'unique_001',
-      );
+      expect(mockCampaignRepository.findByReceiptCampaignId).toHaveBeenCalledWith('campaign_001');
+      expect(mockRewardRepository.findByMediaCashbackId).toHaveBeenCalledWith('unique_001');
       expect(mockRewardRepository.save).toHaveBeenCalledTimes(1);
       expect(mockUserCoinRepository.save).toHaveBeenCalledTimes(1);
       expect(mockCoinTransactionRepository.save).toHaveBeenCalledTimes(1);
@@ -134,9 +116,7 @@ describe('ProcessWebhookUseCase', () => {
       } as WebhookPayloadDto;
 
       const campaign = EntityFactory.createCampaign();
-      mockCampaignRepository.findByReceiptCampaignId.mockResolvedValue(
-        campaign,
-      );
+      mockCampaignRepository.findByReceiptCampaignId.mockResolvedValue(campaign);
       mockRewardRepository.findByMediaCashbackId.mockResolvedValue(null);
       mockUserCoinRepository.findByUserId.mockResolvedValue(null); // 初回獲得
 
@@ -167,17 +147,11 @@ describe('ProcessWebhookUseCase', () => {
         mediaCashbackId: 'unique_001',
       });
 
-      mockCampaignRepository.findByReceiptCampaignId.mockResolvedValue(
-        campaign,
-      );
-      mockRewardRepository.findByMediaCashbackId.mockResolvedValue(
-        existingReward,
-      );
+      mockCampaignRepository.findByReceiptCampaignId.mockResolvedValue(campaign);
+      mockRewardRepository.findByMediaCashbackId.mockResolvedValue(existingReward);
 
       // Act & Assert
-      await expect(useCase.execute(payload)).rejects.toThrow(
-        'ALREADY_PROCESSED',
-      );
+      await expect(useCase.execute(payload)).rejects.toThrow('ALREADY_PROCESSED');
       expect(mockRewardRepository.save).not.toHaveBeenCalled();
       expect(mockUserCoinRepository.save).not.toHaveBeenCalled();
       expect(mockCoinTransactionRepository.save).not.toHaveBeenCalled();
@@ -199,9 +173,7 @@ describe('ProcessWebhookUseCase', () => {
       mockCampaignRepository.findByReceiptCampaignId.mockResolvedValue(null);
 
       // Act & Assert
-      await expect(useCase.execute(payload)).rejects.toThrow(
-        'キャンペーンが未登録です',
-      );
+      await expect(useCase.execute(payload)).rejects.toThrow('キャンペーンが未登録です');
       expect(mockRewardRepository.save).not.toHaveBeenCalled();
       expect(mockUserCoinRepository.save).not.toHaveBeenCalled();
       expect(mockCoinTransactionRepository.save).not.toHaveBeenCalled();
@@ -223,9 +195,7 @@ describe('ProcessWebhookUseCase', () => {
       const campaign = EntityFactory.createCampaign();
       const userCoin = EntityFactory.createUserCoin();
 
-      mockCampaignRepository.findByReceiptCampaignId.mockResolvedValue(
-        campaign,
-      );
+      mockCampaignRepository.findByReceiptCampaignId.mockResolvedValue(campaign);
       mockRewardRepository.findByMediaCashbackId.mockResolvedValue(null);
       mockUserCoinRepository.findByUserId.mockResolvedValue(userCoin);
 
