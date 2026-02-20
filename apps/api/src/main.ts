@@ -6,6 +6,7 @@ import { InfrastructureModule } from './modules/infrastructure.module';
 import { RepositoryModule } from './modules/repository.module';
 import { AuthModule } from './modules/auth.module';
 import { WebhookModule } from './modules/webhook.module';
+import { CoinModule } from './modules/coin.module';
 
 @Controller()
 class AppController {
@@ -23,6 +24,7 @@ class AppController {
     RepositoryModule, // Repository実装を全体で利用可能にする
     AuthModule, // 認証API
     WebhookModule, // Webhook受信API
+    CoinModule, // コイン管理API
   ],
   controllers: [AppController],
 })
