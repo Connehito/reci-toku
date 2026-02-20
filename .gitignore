@@ -10,7 +10,6 @@ coverage
 # Production
 dist
 build
-.next
 out
 
 # Misc
@@ -25,9 +24,6 @@ yarn-error.log*
 # Local env files
 .env
 .env*.local
-
-# Vercel
-.vercel
 
 # Turbo
 .turbo
