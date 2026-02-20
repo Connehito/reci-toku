@@ -39,8 +39,7 @@ export class GenerateJweTokenUseCase {
     }
 
     // Secrets Managerから暗号化鍵とclient_id取得
-    const { encryptionKey, clientId } =
-      await this.secretsService.getPMNCredentials();
+    const { encryptionKey, clientId } = await this.secretsService.getPMNCredentials();
 
     // Payload作成（Performance Media Network仕様）
     const payload = {
@@ -48,11 +47,7 @@ export class GenerateJweTokenUseCase {
     };
 
     // JWE生成
-    const jweToken = await this.encryptionService.encryptJWE(
-      payload,
-      clientId,
-      encryptionKey,
-    );
+    const jweToken = await this.encryptionService.encryptJWE(payload, clientId, encryptionKey);
 
     this.logger.log(`JWEトークン生成成功: userId=${userId}`);
     return jweToken;

@@ -5,12 +5,8 @@ import { ServiceMockFactory } from '../../__test__/factories/service.mock.factor
 
 describe('GenerateJweTokenUseCase', () => {
   let useCase: GenerateJweTokenUseCase;
-  let mockSecretsService: ReturnType<
-    typeof ServiceMockFactory.createSecretsServiceMock
-  >;
-  let mockEncryptionService: ReturnType<
-    typeof ServiceMockFactory.createEncryptionServiceMock
-  >;
+  let mockSecretsService: ReturnType<typeof ServiceMockFactory.createSecretsServiceMock>;
+  let mockEncryptionService: ReturnType<typeof ServiceMockFactory.createEncryptionServiceMock>;
 
   beforeEach(async () => {
     // モックサービスの作成
@@ -89,9 +85,7 @@ describe('GenerateJweTokenUseCase', () => {
       const userId = 0;
 
       // Act & Assert
-      await expect(useCase.execute(userId)).rejects.toThrow(
-        '不正なユーザーIDです',
-      );
+      await expect(useCase.execute(userId)).rejects.toThrow('不正なユーザーIDです');
       expect(mockSecretsService.getPMNCredentials).not.toHaveBeenCalled();
       expect(mockEncryptionService.encryptJWE).not.toHaveBeenCalled();
     });
@@ -101,9 +95,7 @@ describe('GenerateJweTokenUseCase', () => {
       const userId = -1;
 
       // Act & Assert
-      await expect(useCase.execute(userId)).rejects.toThrow(
-        '不正なユーザーIDです',
-      );
+      await expect(useCase.execute(userId)).rejects.toThrow('不正なユーザーIDです');
       expect(mockSecretsService.getPMNCredentials).not.toHaveBeenCalled();
       expect(mockEncryptionService.encryptJWE).not.toHaveBeenCalled();
     });
@@ -115,9 +107,7 @@ describe('GenerateJweTokenUseCase', () => {
       mockSecretsService.getPMNCredentials.mockRejectedValue(mockError);
 
       // Act & Assert
-      await expect(useCase.execute(userId)).rejects.toThrow(
-        'Secrets Manager connection failed',
-      );
+      await expect(useCase.execute(userId)).rejects.toThrow('Secrets Manager connection failed');
       expect(mockSecretsService.getPMNCredentials).toHaveBeenCalledTimes(1);
       expect(mockEncryptionService.encryptJWE).not.toHaveBeenCalled();
     });
@@ -135,9 +125,7 @@ describe('GenerateJweTokenUseCase', () => {
       mockEncryptionService.encryptJWE.mockRejectedValue(mockError);
 
       // Act & Assert
-      await expect(useCase.execute(userId)).rejects.toThrow(
-        'JWE encryption failed',
-      );
+      await expect(useCase.execute(userId)).rejects.toThrow('JWE encryption failed');
       expect(mockSecretsService.getPMNCredentials).toHaveBeenCalledTimes(1);
       expect(mockEncryptionService.encryptJWE).toHaveBeenCalledTimes(1);
     });

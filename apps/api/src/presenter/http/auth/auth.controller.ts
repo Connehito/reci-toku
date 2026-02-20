@@ -1,11 +1,4 @@
-import {
-  Controller,
-  Get,
-  Query,
-  ParseIntPipe,
-  Logger,
-  BadRequestException,
-} from '@nestjs/common';
+import { Controller, Get, Query, ParseIntPipe, Logger, BadRequestException } from '@nestjs/common';
 import { GenerateJweTokenUseCase } from '../../../usecase/auth/generate-jwe-token.usecase';
 
 /**
@@ -17,9 +10,7 @@ import { GenerateJweTokenUseCase } from '../../../usecase/auth/generate-jwe-toke
 export class AuthController {
   private readonly logger = new Logger(AuthController.name);
 
-  constructor(
-    private readonly generateJweTokenUseCase: GenerateJweTokenUseCase,
-  ) {}
+  constructor(private readonly generateJweTokenUseCase: GenerateJweTokenUseCase) {}
 
   /**
    * JWEトークン生成

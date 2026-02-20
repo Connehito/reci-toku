@@ -62,14 +62,10 @@ describe('AuthController', () => {
     it('不正なユーザーIDの場合はBadRequestExceptionをスローする', async () => {
       // Arrange
       const userId = 0;
-      mockGenerateJweTokenUseCase.execute.mockRejectedValue(
-        new Error('不正なユーザーIDです'),
-      );
+      mockGenerateJweTokenUseCase.execute.mockRejectedValue(new Error('不正なユーザーIDです'));
 
       // Act & Assert
-      await expect(controller.generateToken(userId)).rejects.toThrow(
-        BadRequestException,
-      );
+      await expect(controller.generateToken(userId)).rejects.toThrow(BadRequestException);
       expect(mockGenerateJweTokenUseCase.execute).toHaveBeenCalledWith(userId);
     });
 
@@ -80,9 +76,7 @@ describe('AuthController', () => {
       mockGenerateJweTokenUseCase.execute.mockRejectedValue(mockError);
 
       // Act & Assert
-      await expect(controller.generateToken(userId)).rejects.toThrow(
-        'Unexpected error',
-      );
+      await expect(controller.generateToken(userId)).rejects.toThrow('Unexpected error');
       expect(mockGenerateJweTokenUseCase.execute).toHaveBeenCalledWith(userId);
     });
 
@@ -105,9 +99,7 @@ describe('AuthController', () => {
       mockGenerateJweTokenUseCase.execute.mockRejectedValue(mockError);
 
       // Act & Assert
-      await expect(controller.generateToken(userId)).rejects.toThrow(
-        'JWE encryption failed',
-      );
+      await expect(controller.generateToken(userId)).rejects.toThrow('JWE encryption failed');
     });
   });
 });
