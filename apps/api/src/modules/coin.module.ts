@@ -1,5 +1,6 @@
 import { Module } from '@nestjs/common';
 import { GetCoinBalanceUseCase } from '../usecase/coin/get-coin-balance.usecase';
+import { GetCoinHistoryUseCase } from '../usecase/coin/get-coin-history.usecase';
 import { CoinController } from '../presenter/http/coin/coin.controller';
 
 /**
@@ -9,7 +10,7 @@ import { CoinController } from '../presenter/http/coin/coin.controller';
  * InfrastructureModule、RepositoryModuleから必要なサービスをインポート
  */
 @Module({
-  providers: [GetCoinBalanceUseCase],
+  providers: [GetCoinBalanceUseCase, GetCoinHistoryUseCase],
   controllers: [CoinController],
 })
 export class CoinModule {}

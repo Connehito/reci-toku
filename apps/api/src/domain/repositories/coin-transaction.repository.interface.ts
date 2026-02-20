@@ -32,6 +32,15 @@ export interface ICoinTransactionRepository {
   findByRewardId(rewardId: string): Promise<CoinTransaction | null>;
 
   /**
+   * ユーザーIDで取引履歴を検索（ページネーション対応）
+   */
+  findByUserIdWithPagination(
+    userId: number,
+    limit: number,
+    offset: number,
+  ): Promise<{ transactions: CoinTransaction[]; total: number }>;
+
+  /**
    * 取引を保存（作成のみ、更新は不可）
    */
   save(transaction: CoinTransaction): Promise<void>;
