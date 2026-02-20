@@ -1,10 +1,7 @@
 import { UserCoin } from '../../domain/entities/user-coin.entity';
 import { Reward } from '../../domain/entities/reward.entity';
 import { Campaign } from '../../domain/entities/campaign.entity';
-import {
-  CoinTransaction,
-  TransactionType,
-} from '../../domain/entities/coin-transaction.entity';
+import { CoinTransaction } from '../../domain/entities/coin-transaction.entity';
 import { v4 as uuidv4 } from 'uuid';
 
 /**
@@ -46,7 +43,7 @@ export class EntityFactory {
   /**
    * Rewardテストデータを作成
    */
-  static createReward(overrides: Partial<any> = {}): Reward {
+  static createReward(overrides: Partial<Parameters<typeof Reward.create>[0]> = {}): Reward {
     const defaults = {
       id: uuidv4(),
       userId: 12345,
@@ -72,7 +69,36 @@ export class EntityFactory {
   /**
    * Campaignテストデータを作成
    */
-  static createCampaign(overrides: Partial<any> = {}): Campaign {
+  static createCampaign(
+    overrides: Partial<{
+      id: string;
+      receiptCampaignId: string;
+      receiptCampaignName: string;
+      receiptCampaignImage: string | null;
+      companyName: string | null;
+      companyId: string | null;
+      incentivePoints: number;
+      serviceType: string;
+      isAllReceiptCampaign: boolean;
+      missionType: string | null;
+      missionOpenAt: Date | null;
+      missionCloseAt: Date | null;
+      priceText: string | null;
+      title: string;
+      description: string | null;
+      imageUrl: string | null;
+      displayOrder: number;
+      isPublished: boolean;
+      publishedAt: Date | null;
+      unpublishedAt: Date | null;
+      editorComment: string | null;
+      tags: string[] | null;
+      createdAt: Date;
+      updatedAt: Date;
+      createdBy: number | null;
+      updatedBy: number | null;
+    }> = {},
+  ): Campaign {
     const defaults = {
       id: '1',
       receiptCampaignId: 'campaign_001',
@@ -136,7 +162,17 @@ export class EntityFactory {
   /**
    * CoinTransactionテストデータを作成（報酬付与）
    */
-  static createRewardTransaction(overrides: Partial<any> = {}): CoinTransaction {
+  static createRewardTransaction(
+    overrides: Partial<{
+      id: string;
+      userId: number;
+      amount: number;
+      balanceAfter: number;
+      rewardId: string;
+      mediaCashbackId: string;
+      description: string;
+    }> = {},
+  ): CoinTransaction {
     const defaults = {
       id: uuidv4(),
       userId: 12345,
@@ -162,7 +198,15 @@ export class EntityFactory {
   /**
    * CoinTransactionテストデータを作成（交換）
    */
-  static createExchangeTransaction(overrides: Partial<any> = {}): CoinTransaction {
+  static createExchangeTransaction(
+    overrides: Partial<{
+      id: string;
+      userId: number;
+      amount: number;
+      balanceAfter: number;
+      description: string;
+    }> = {},
+  ): CoinTransaction {
     const defaults = {
       id: uuidv4(),
       userId: 12345,
@@ -184,7 +228,15 @@ export class EntityFactory {
   /**
    * CoinTransactionテストデータを作成（失効）
    */
-  static createExpireTransaction(overrides: Partial<any> = {}): CoinTransaction {
+  static createExpireTransaction(
+    overrides: Partial<{
+      id: string;
+      userId: number;
+      amount: number;
+      balanceAfter: number;
+      description: string;
+    }> = {},
+  ): CoinTransaction {
     const defaults = {
       id: uuidv4(),
       userId: 12345,
