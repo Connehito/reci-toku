@@ -1,11 +1,4 @@
-import {
-  Controller,
-  Get,
-  Param,
-  ParseIntPipe,
-  Logger,
-  BadRequestException,
-} from '@nestjs/common';
+import { Controller, Get, Param, ParseIntPipe, Logger, BadRequestException } from '@nestjs/common';
 import { GetCoinBalanceUseCase } from '../../../usecase/coin/get-coin-balance.usecase';
 
 /**
@@ -17,9 +10,7 @@ import { GetCoinBalanceUseCase } from '../../../usecase/coin/get-coin-balance.us
 export class CoinController {
   private readonly logger = new Logger(CoinController.name);
 
-  constructor(
-    private readonly getCoinBalanceUseCase: GetCoinBalanceUseCase,
-  ) {}
+  constructor(private readonly getCoinBalanceUseCase: GetCoinBalanceUseCase) {}
 
   /**
    * コイン残高照会
