@@ -18,17 +18,11 @@ import { IEncryptionService } from '../../domain/services/encryption.service.int
 export class JoseEncryptionService implements IEncryptionService {
   private readonly logger = new Logger(JoseEncryptionService.name);
 
-  async encryptJWE(
-    payload: object,
-    clientId: string,
-    encryptionKey: string,
-  ): Promise<string> {
+  async encryptJWE(payload: object, clientId: string, encryptionKey: string): Promise<string> {
     try {
       const key = Buffer.from(encryptionKey, 'base64');
 
-      const jwe = await new jose.CompactEncrypt(
-        new TextEncoder().encode(JSON.stringify(payload)),
-      )
+      const jwe = await new jose.CompactEncrypt(new TextEncoder().encode(JSON.stringify(payload)))
         .setProtectedHeader({
           alg: 'dir', // Direct encryption
           enc: 'A256GCM', // AES-256-GCM

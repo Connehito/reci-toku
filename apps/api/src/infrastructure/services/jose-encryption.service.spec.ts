@@ -15,9 +15,7 @@ describe('JoseEncryptionService', () => {
   let service: JoseEncryptionService;
 
   // テスト用の暗号化鍵（256bit = 32bytes、Base64エンコード）
-  const testEncryptionKey = Buffer.from(
-    '0123456789abcdef0123456789abcdef',
-  ).toString('base64');
+  const testEncryptionKey = Buffer.from('0123456789abcdef0123456789abcdef').toString('base64');
   const testClientId = 'test-client-id';
 
   beforeEach(async () => {
@@ -36,11 +34,7 @@ describe('JoseEncryptionService', () => {
       const payload = { media_user_code: '12345' };
 
       // Act
-      const jweToken = await service.encryptJWE(
-        payload,
-        testClientId,
-        testEncryptionKey,
-      );
+      const jweToken = await service.encryptJWE(payload, testClientId, testEncryptionKey);
 
       // Assert
       expect(jweToken).toBeDefined();
@@ -82,9 +76,7 @@ describe('JoseEncryptionService', () => {
       }));
 
       // Act & Assert
-      await expect(
-        service.encryptJWE(payload, testClientId, invalidKey),
-      ).rejects.toThrow();
+      await expect(service.encryptJWE(payload, testClientId, invalidKey)).rejects.toThrow();
     });
   });
 
@@ -93,19 +85,14 @@ describe('JoseEncryptionService', () => {
       // Arrange
       const jweToken = 'test.jwe.token';
       const expectedPayload = { media_user_code: '12345' };
-      const mockPlaintext = new TextEncoder().encode(
-        JSON.stringify(expectedPayload),
-      );
+      const mockPlaintext = new TextEncoder().encode(JSON.stringify(expectedPayload));
 
       (jose.compactDecrypt as jest.Mock).mockResolvedValue({
         plaintext: mockPlaintext,
       });
 
       // Act
-      const decryptedPayload = await service.decryptJWE(
-        jweToken,
-        testEncryptionKey,
-      );
+      const decryptedPayload = await service.decryptJWE(jweToken, testEncryptionKey);
 
       // Assert
       expect(decryptedPayload).toEqual(expectedPayload);
@@ -116,31 +103,21 @@ describe('JoseEncryptionService', () => {
       // Arrange
       const invalidJwe = 'invalid.jwe.token.format.here';
 
-      (jose.compactDecrypt as jest.Mock).mockRejectedValue(
-        new Error('Invalid JWE'),
-      );
+      (jose.compactDecrypt as jest.Mock).mockRejectedValue(new Error('Invalid JWE'));
 
       // Act & Assert
-      await expect(
-        service.decryptJWE(invalidJwe, testEncryptionKey),
-      ).rejects.toThrow();
+      await expect(service.decryptJWE(invalidJwe, testEncryptionKey)).rejects.toThrow();
     });
 
     it('異なる鍵で復号化しようとするとエラーをスローする', async () => {
       // Arrange
       const jweToken = 'test.jwe.token';
-      const differentKey = Buffer.from(
-        'differentkey0123456789abcdef',
-      ).toString('base64');
+      const differentKey = Buffer.from('differentkey0123456789abcdef').toString('base64');
 
-      (jose.compactDecrypt as jest.Mock).mockRejectedValue(
-        new Error('Decryption failed'),
-      );
+      (jose.compactDecrypt as jest.Mock).mockRejectedValue(new Error('Decryption failed'));
 
       // Act & Assert
-      await expect(service.decryptJWE(jweToken, differentKey)).rejects.toThrow(
-        'Decryption failed',
-      );
+      await expect(service.decryptJWE(jweToken, differentKey)).rejects.toThrow('Decryption failed');
     });
   });
 });

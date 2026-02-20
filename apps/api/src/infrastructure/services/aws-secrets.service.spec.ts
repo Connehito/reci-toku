@@ -1,9 +1,6 @@
 import { Test, TestingModule } from '@nestjs/testing';
 import { AwsSecretsService } from './aws-secrets.service';
-import {
-  SecretsManagerClient,
-  GetSecretValueCommand,
-} from '@aws-sdk/client-secrets-manager';
+import { SecretsManagerClient, GetSecretValueCommand } from '@aws-sdk/client-secrets-manager';
 
 // AWS SDK v3のモック
 jest.mock('@aws-sdk/client-secrets-manager');
@@ -54,9 +51,7 @@ describe('AwsSecretsService', () => {
         encryptionKey: 'dGVzdC1lbmNyeXB0aW9uLWtleQ==',
         clientId: 'test-client-id',
       });
-      expect(mockSecretsManagerClient.send).toHaveBeenCalledWith(
-        expect.any(GetSecretValueCommand),
-      );
+      expect(mockSecretsManagerClient.send).toHaveBeenCalledWith(expect.any(GetSecretValueCommand));
     });
 
     it('SecretStringが存在しない場合はエラーをスローする', async () => {
@@ -80,9 +75,7 @@ describe('AwsSecretsService', () => {
       });
 
       // Act & Assert
-      await expect(service.getPMNCredentials()).rejects.toThrow(
-        'PMN認証情報が不正です',
-      );
+      await expect(service.getPMNCredentials()).rejects.toThrow('PMN認証情報が不正です');
     });
 
     it('client_idが存在しない場合はエラーをスローする', async () => {
@@ -96,9 +89,7 @@ describe('AwsSecretsService', () => {
       });
 
       // Act & Assert
-      await expect(service.getPMNCredentials()).rejects.toThrow(
-        'PMN認証情報が不正です',
-      );
+      await expect(service.getPMNCredentials()).rejects.toThrow('PMN認証情報が不正です');
     });
 
     it('AWS SDK呼び出しがエラーの場合は例外を再スローする', async () => {
@@ -107,9 +98,7 @@ describe('AwsSecretsService', () => {
       (mockSecretsManagerClient.send as jest.Mock).mockRejectedValue(awsError);
 
       // Act & Assert
-      await expect(service.getPMNCredentials()).rejects.toThrow(
-        'AWS connection failed',
-      );
+      await expect(service.getPMNCredentials()).rejects.toThrow('AWS connection failed');
     });
   });
 });
