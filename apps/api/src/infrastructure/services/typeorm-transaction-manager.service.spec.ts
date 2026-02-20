@@ -4,15 +4,16 @@ import { DataSource } from 'typeorm';
 
 describe('TypeOrmTransactionManager', () => {
   let service: TypeOrmTransactionManager;
-  let mockDataSource: jest.Mocked<DataSource>;
+  let mockTransaction: jest.Mock;
 
   beforeEach(async () => {
-    mockDataSource = {
-      transaction: jest.fn(),
-    } as any;
+    mockTransaction = jest.fn();
 
     const module: TestingModule = await Test.createTestingModule({
-      providers: [TypeOrmTransactionManager, { provide: DataSource, useValue: mockDataSource }],
+      providers: [
+        TypeOrmTransactionManager,
+        { provide: DataSource, useValue: { transaction: mockTransaction } },
+      ],
     }).compile();
 
     service = module.get<TypeOrmTransactionManager>(TypeOrmTransactionManager);
@@ -22,14 +23,14 @@ describe('TypeOrmTransactionManager', () => {
     it('正常にトランザクション内で処理を実行できる', async () => {
       // Arrange
       const mockWork = jest.fn().mockResolvedValue('success');
-      mockDataSource.transaction.mockImplementation(async (work: any) => await work());
+      mockTransaction.mockImplementation(async (work: () => Promise<unknown>) => await work());
 
       // Act
       const result = await service.execute(mockWork);
 
       // Assert
       expect(result).toBe('success');
-      expect(mockDataSource.transaction).toHaveBeenCalledTimes(1);
+      expect(mockTransaction).toHaveBeenCalledTimes(1);
       expect(mockWork).toHaveBeenCalledTimes(1);
     });
 
@@ -37,13 +38,13 @@ describe('TypeOrmTransactionManager', () => {
       // Arrange
       const mockError = new Error('Test error');
       const mockWork = jest.fn().mockRejectedValue(mockError);
-      mockDataSource.transaction.mockImplementation(async (work: any) => {
+      mockTransaction.mockImplementation(async (work: () => Promise<unknown>) => {
         return await work();
       });
 
       // Act & Assert
       await expect(service.execute(mockWork)).rejects.toThrow('Test error');
-      expect(mockDataSource.transaction).toHaveBeenCalledTimes(1);
+      expect(mockTransaction).toHaveBeenCalledTimes(1);
     });
 
     it('トランザクション内で複数の操作を実行できる', async () => {
@@ -55,7 +56,7 @@ describe('TypeOrmTransactionManager', () => {
         await operation2();
         return 'completed';
       });
-      mockDataSource.transaction.mockImplementation(async (work: any) => await work());
+      mockTransaction.mockImplementation(async (work: () => Promise<unknown>) => await work());
 
       // Act
       const result = await service.execute(mockWork);
@@ -74,7 +75,7 @@ describe('TypeOrmTransactionManager', () => {
       }
       const expectedResult: TestResult = { id: 1, name: 'test' };
       const mockWork = jest.fn().mockResolvedValue(expectedResult);
-      mockDataSource.transaction.mockImplementation(async (work: any) => await work());
+      mockTransaction.mockImplementation(async (work: () => Promise<unknown>) => await work());
 
       // Act
       const result = await service.execute<TestResult>(mockWork);
