@@ -2,6 +2,9 @@ import { NestFactory } from '@nestjs/core';
 import { Controller, Get, Module } from '@nestjs/common';
 import { HealthModule } from './health/health.module';
 import { DatabaseModule } from './database/database.module';
+import { InfrastructureModule } from './modules/infrastructure.module';
+import { RepositoryModule } from './modules/repository.module';
+import { AuthModule } from './modules/auth.module';
 
 @Controller()
 class AppController {
@@ -12,7 +15,13 @@ class AppController {
 }
 
 @Module({
-  imports: [DatabaseModule, HealthModule],
+  imports: [
+    DatabaseModule,
+    HealthModule,
+    InfrastructureModule, // Infrastructure Serviceを全体で利用可能にする
+    RepositoryModule, // Repository実装を全体で利用可能にする
+    AuthModule, // 認証API
+  ],
   controllers: [AppController],
 })
 class AppModule {}
