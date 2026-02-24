@@ -7,6 +7,13 @@ import { ICoinTransactionRepository } from '../repositories/coin-transaction.rep
  *
  * このインターフェース経由で取得したリポジトリは、
  * すべて同一トランザクション内で動作することが保証される
+ *
+ * 設計上のトレードオフ:
+ * ITransactionManagerがUnitOfWork（具体的なリポジトリ群）を知ることは、
+ * 厳密にはClean Architectureの依存ルールに反する。
+ * しかしTypeORMではトランザクション用のEntityManagerを明示的に渡さないと
+ * トランザクションが効かないため、安全なトランザクション実現を優先してここだけ許容する。
+ * リポジトリ追加時はこのインターフェースの更新も必要になる。
  */
 export interface UnitOfWork {
   rewardRepository: IRewardRepository;
@@ -21,6 +28,7 @@ export interface UnitOfWork {
  * Clean Architecture原則:
  * - UseCase層はデータベースの実装詳細を知らない
  * - 将来、他のORMに切り替えてもUseCase層は変更不要
+ * - UnitOfWorkの採用経緯は上記コメントを参照
  */
 export interface ITransactionManager {
   /**
