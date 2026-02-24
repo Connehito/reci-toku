@@ -3,6 +3,7 @@ import { GetCoinHistoryUseCase } from './get-coin-history.usecase';
 import { TOKENS } from '../../domain/tokens';
 import { RepositoryMockFactory } from '../../__test__/factories/repository.mock.factory';
 import { EntityFactory } from '../../__test__/factories/entity.factory';
+import { InvalidUserIdError } from '../../domain/exceptions/invalid-user-id.error';
 
 // uuidをモック
 jest.mock('uuid', () => ({
@@ -165,7 +166,7 @@ describe('GetCoinHistoryUseCase', () => {
       const userId = 0;
 
       // Act & Assert
-      await expect(useCase.execute(userId)).rejects.toThrow('不正なユーザーIDです');
+      await expect(useCase.execute(userId)).rejects.toThrow(InvalidUserIdError);
       expect(mockCoinTransactionRepository.findByUserIdWithPagination).not.toHaveBeenCalled();
     });
 

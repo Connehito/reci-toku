@@ -86,11 +86,13 @@ export class CoinController {
         error instanceof Error ? error.stack : String(error),
       );
 
+      if (error instanceof InvalidUserIdError) {
+        throw new BadRequestException(error.message);
+      }
+
       if (
         error instanceof Error &&
-        (error.message === '不正なユーザーIDです' ||
-          error.message.includes('取得件数') ||
-          error.message.includes('スキップ件数'))
+        (error.message.includes('取得件数') || error.message.includes('スキップ件数'))
       ) {
         throw new BadRequestException(error.message);
       }

@@ -2,6 +2,7 @@ import { Injectable, Inject, Logger } from '@nestjs/common';
 import { TOKENS } from '../../domain/tokens';
 import { ICoinTransactionRepository } from '../../domain/repositories/coin-transaction.repository.interface';
 import { CoinHistoryResponseDto, CoinHistoryItemDto } from './dto/coin-history-response.dto';
+import { InvalidUserIdError } from '../../domain/exceptions/invalid-user-id.error';
 
 /**
  * コイン取引履歴照会UseCase
@@ -40,7 +41,7 @@ export class GetCoinHistoryUseCase {
 
     // ユーザーIDのバリデーション
     if (!userId || userId <= 0) {
-      throw new Error('不正なユーザーIDです');
+      throw new InvalidUserIdError(userId);
     }
 
     // limitのバリデーション

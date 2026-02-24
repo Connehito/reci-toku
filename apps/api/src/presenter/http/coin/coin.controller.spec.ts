@@ -179,7 +179,7 @@ describe('CoinController', () => {
     it('不正なユーザーIDの場合はBadRequestExceptionをスローする', async () => {
       // Arrange
       const userId = 0;
-      mockGetCoinHistoryUseCase.execute.mockRejectedValue(new Error('不正なユーザーIDです'));
+      mockGetCoinHistoryUseCase.execute.mockRejectedValue(new InvalidUserIdError(0));
 
       // Act & Assert
       await expect(controller.getHistory(userId, 20, 0)).rejects.toThrow(BadRequestException);
