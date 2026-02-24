@@ -1,3 +1,19 @@
+import { IRewardRepository } from '../repositories/reward.repository.interface';
+import { IUserCoinRepository } from '../repositories/user-coin.repository.interface';
+import { ICoinTransactionRepository } from '../repositories/coin-transaction.repository.interface';
+
+/**
+ * UnitOfWork - トランザクション内で使用するリポジトリ群
+ *
+ * このインターフェース経由で取得したリポジトリは、
+ * すべて同一トランザクション内で動作することが保証される
+ */
+export interface UnitOfWork {
+  rewardRepository: IRewardRepository;
+  userCoinRepository: IUserCoinRepository;
+  coinTransactionRepository: ICoinTransactionRepository;
+}
+
 /**
  * トランザクション管理の抽象化
  * ORM実装の詳細（TypeORM、Prismaなど）をUseCaseから隠蔽する
@@ -9,8 +25,9 @@
 export interface ITransactionManager {
   /**
    * トランザクション内で処理を実行
-   * @param work - トランザクション内で実行する処理
+   * UnitOfWork経由のリポジトリ操作はすべて同一トランザクションで実行される
+   * @param work - トランザクション内で実行する処理（UnitOfWorkを受け取る）
    * @returns 処理結果
    */
-  execute<T>(work: () => Promise<T>): Promise<T>;
+  execute<T>(work: (uow: UnitOfWork) => Promise<T>): Promise<T>;
 }

@@ -1,6 +1,7 @@
 import { ISecretsService } from '../../domain/services/secrets.service.interface';
 import { IEncryptionService } from '../../domain/services/encryption.service.interface';
-import { ITransactionManager } from '../../domain/services/transaction-manager.interface';
+import { ITransactionManager, UnitOfWork } from '../../domain/services/transaction-manager.interface';
+import { RepositoryMockFactory } from './repository.mock.factory';
 
 /**
  * Infrastructure Service層のモック統一ファクトリー
@@ -24,9 +25,20 @@ export class ServiceMockFactory {
     };
   }
 
-  static createTransactionManagerMock(): jest.Mocked<ITransactionManager> {
+  /**
+   * TransactionManagerのモックを作成
+   * execute()はUnitOfWorkをworkに渡して実行する
+   */
+  static createTransactionManagerMock(uow?: UnitOfWork): jest.Mocked<ITransactionManager> {
+    const defaultUow: UnitOfWork = uow ?? {
+      rewardRepository: RepositoryMockFactory.createRewardRepositoryMock(),
+      userCoinRepository: RepositoryMockFactory.createUserCoinRepositoryMock(),
+      coinTransactionRepository: RepositoryMockFactory.createCoinTransactionRepositoryMock(),
+    };
     return {
-      execute: jest.fn().mockImplementation(<T>(work: () => Promise<T>) => work()),
+      execute: jest
+        .fn()
+        .mockImplementation(<T>(work: (uow: UnitOfWork) => Promise<T>) => work(defaultUow)),
     } as jest.Mocked<ITransactionManager>;
   }
 }
