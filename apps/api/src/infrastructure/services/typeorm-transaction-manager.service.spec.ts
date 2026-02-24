@@ -1,18 +1,48 @@
 import { Test, TestingModule } from '@nestjs/testing';
 import { TypeOrmTransactionManager } from './typeorm-transaction-manager.service';
 import { DataSource } from 'typeorm';
+import { UnitOfWork } from '../../domain/services/transaction-manager.interface';
 
 describe('TypeOrmTransactionManager', () => {
   let service: TypeOrmTransactionManager;
-  let mockTransaction: jest.Mock;
+  let mockConnect: jest.Mock;
+  let mockStartTransaction: jest.Mock;
+  let mockCommitTransaction: jest.Mock;
+  let mockRollbackTransaction: jest.Mock;
+  let mockRelease: jest.Mock;
+  let mockGetRepository: jest.Mock;
 
   beforeEach(async () => {
-    mockTransaction = jest.fn();
+    mockConnect = jest.fn();
+    mockStartTransaction = jest.fn();
+    mockCommitTransaction = jest.fn();
+    mockRollbackTransaction = jest.fn();
+    mockRelease = jest.fn();
+    // getRepositoryは空オブジェクトを返す（Repository実装のコンストラクタに渡される）
+    mockGetRepository = jest.fn().mockReturnValue({
+      findOne: jest.fn(),
+      find: jest.fn(),
+      save: jest.fn(),
+      delete: jest.fn(),
+    });
+
+    const mockDataSource = {
+      createQueryRunner: jest.fn().mockReturnValue({
+        connect: mockConnect,
+        startTransaction: mockStartTransaction,
+        commitTransaction: mockCommitTransaction,
+        rollbackTransaction: mockRollbackTransaction,
+        release: mockRelease,
+        manager: {
+          getRepository: mockGetRepository,
+        },
+      }),
+    };
 
     const module: TestingModule = await Test.createTestingModule({
       providers: [
         TypeOrmTransactionManager,
-        { provide: DataSource, useValue: { transaction: mockTransaction } },
+        { provide: DataSource, useValue: mockDataSource },
       ],
     }).compile();
 
@@ -21,69 +51,64 @@ describe('TypeOrmTransactionManager', () => {
 
   describe('execute', () => {
     it('正常にトランザクション内で処理を実行できる', async () => {
-      // Arrange
-      const mockWork = jest.fn().mockResolvedValue('success');
-      mockTransaction.mockImplementation(async (work: () => Promise<unknown>) => await work());
-
-      // Act
-      const result = await service.execute(mockWork);
+      // Arrange & Act
+      const result = await service.execute(async (uow: UnitOfWork) => {
+        expect(uow.rewardRepository).toBeDefined();
+        expect(uow.userCoinRepository).toBeDefined();
+        expect(uow.coinTransactionRepository).toBeDefined();
+        return 'success';
+      });
 
       // Assert
       expect(result).toBe('success');
-      expect(mockTransaction).toHaveBeenCalledTimes(1);
-      expect(mockWork).toHaveBeenCalledTimes(1);
+      expect(mockConnect).toHaveBeenCalledTimes(1);
+      expect(mockStartTransaction).toHaveBeenCalledTimes(1);
+      expect(mockCommitTransaction).toHaveBeenCalledTimes(1);
+      expect(mockRollbackTransaction).not.toHaveBeenCalled();
+      expect(mockRelease).toHaveBeenCalledTimes(1);
     });
 
-    it('処理がエラーをスローした場合、そのエラーを再スローする', async () => {
+    it('処理がエラーをスローした場合、ロールバックする', async () => {
       // Arrange
       const mockError = new Error('Test error');
-      const mockWork = jest.fn().mockRejectedValue(mockError);
-      mockTransaction.mockImplementation(async (work: () => Promise<unknown>) => {
-        return await work();
-      });
 
       // Act & Assert
-      await expect(service.execute(mockWork)).rejects.toThrow('Test error');
-      expect(mockTransaction).toHaveBeenCalledTimes(1);
+      await expect(
+        service.execute(async () => {
+          throw mockError;
+        }),
+      ).rejects.toThrow('Test error');
+      expect(mockStartTransaction).toHaveBeenCalledTimes(1);
+      expect(mockRollbackTransaction).toHaveBeenCalledTimes(1);
+      expect(mockCommitTransaction).not.toHaveBeenCalled();
+      expect(mockRelease).toHaveBeenCalledTimes(1);
     });
 
-    it('トランザクション内で複数の操作を実行できる', async () => {
-      // Arrange
-      const operation1 = jest.fn().mockResolvedValue('op1');
-      const operation2 = jest.fn().mockResolvedValue('op2');
-      const mockWork = jest.fn().mockImplementation(async () => {
-        await operation1();
-        await operation2();
-        return 'completed';
+    it('トランザクション内でUnitOfWorkのリポジトリが使える', async () => {
+      // Arrange & Act
+      await service.execute(async (uow: UnitOfWork) => {
+        // UnitOfWork経由でリポジトリにアクセスできることを確認
+        expect(uow.rewardRepository).toHaveProperty('save');
+        expect(uow.userCoinRepository).toHaveProperty('save');
+        expect(uow.coinTransactionRepository).toHaveProperty('save');
       });
-      mockTransaction.mockImplementation(async (work: () => Promise<unknown>) => await work());
 
-      // Act
-      const result = await service.execute(mockWork);
-
-      // Assert
-      expect(result).toBe('completed');
-      expect(operation1).toHaveBeenCalledTimes(1);
-      expect(operation2).toHaveBeenCalledTimes(1);
+      // Assert: getRepositoryが3つのSchema分呼ばれる
+      expect(mockGetRepository).toHaveBeenCalledTimes(3);
     });
 
-    it('トランザクション内で型安全な処理を実行できる', async () => {
-      // Arrange
-      interface TestResult {
-        id: number;
-        name: string;
-      }
-      const expectedResult: TestResult = { id: 1, name: 'test' };
-      const mockWork = jest.fn().mockResolvedValue(expectedResult);
-      mockTransaction.mockImplementation(async (work: () => Promise<unknown>) => await work());
-
+    it('エラー時もQueryRunnerが必ず解放される', async () => {
       // Act
-      const result = await service.execute<TestResult>(mockWork);
+      try {
+        await service.execute(async () => {
+          throw new Error('Unexpected error');
+        });
+      } catch {
+        // エラーは無視
+      }
 
-      // Assert
-      expect(result).toEqual(expectedResult);
-      expect(result.id).toBe(1);
-      expect(result.name).toBe('test');
+      // Assert: finallyでreleaseが呼ばれる
+      expect(mockRelease).toHaveBeenCalledTimes(1);
     });
   });
 });
