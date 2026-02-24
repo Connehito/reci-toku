@@ -1,4 +1,5 @@
 import { Test, TestingModule } from '@nestjs/testing';
+import { ConfigService } from '@nestjs/config';
 import { AwsSecretsService } from './aws-secrets.service';
 import { SecretsManagerClient, GetSecretValueCommand } from '@aws-sdk/client-secrets-manager';
 
@@ -8,6 +9,7 @@ jest.mock('@aws-sdk/client-secrets-manager');
 describe('AwsSecretsService', () => {
   let service: AwsSecretsService;
   let mockSecretsManagerClient: jest.Mocked<SecretsManagerClient>;
+  let mockConfigService: { get: jest.Mock };
 
   beforeEach(async () => {
     // モッククライアントの作成
@@ -20,8 +22,22 @@ describe('AwsSecretsService', () => {
       return mockSecretsManagerClient;
     });
 
+    // ConfigServiceのモック
+    mockConfigService = {
+      get: jest.fn().mockImplementation((key: string, defaultValue?: string) => {
+        const config: Record<string, string> = {
+          AWS_REGION: 'ap-northeast-1',
+          PMN_SECRET_ID: 'reci-toku/test/pmn-credentials',
+        };
+        return config[key] ?? defaultValue;
+      }),
+    };
+
     const module: TestingModule = await Test.createTestingModule({
-      providers: [AwsSecretsService],
+      providers: [
+        AwsSecretsService,
+        { provide: ConfigService, useValue: mockConfigService },
+      ],
     }).compile();
 
     service = module.get<AwsSecretsService>(AwsSecretsService);

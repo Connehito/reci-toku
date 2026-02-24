@@ -1,4 +1,5 @@
 import { Injectable, Logger } from '@nestjs/common';
+import { ConfigService } from '@nestjs/config';
 import { SecretsManagerClient, GetSecretValueCommand } from '@aws-sdk/client-secrets-manager';
 import { ISecretsService, PMNCredentials } from '../../domain/services/secrets.service.interface';
 
@@ -14,16 +15,20 @@ export class AwsSecretsService implements ISecretsService {
   private readonly logger = new Logger(AwsSecretsService.name);
   private readonly client: SecretsManagerClient;
 
-  constructor() {
+  constructor(private readonly configService: ConfigService) {
     this.client = new SecretsManagerClient({
-      region: process.env.AWS_REGION || 'ap-northeast-1',
+      region: this.configService.get<string>('AWS_REGION', 'ap-northeast-1'),
     });
   }
 
   async getPMNCredentials(): Promise<PMNCredentials> {
     try {
+      const secretId = this.configService.get<string>(
+        'PMN_SECRET_ID',
+        'reci-toku/pmn-credentials',
+      );
       const command = new GetSecretValueCommand({
-        SecretId: 'reci-toku/pmn-credentials',
+        SecretId: secretId,
       });
       const response = await this.client.send(command);
 
