@@ -3,8 +3,6 @@ import { v4 as uuidv4 } from 'uuid';
 import { TOKENS } from '../../domain/tokens';
 import { ITransactionManager } from '../../domain/services/transaction-manager.interface';
 import { IRewardRepository } from '../../domain/repositories/reward.repository.interface';
-import { IUserCoinRepository } from '../../domain/repositories/user-coin.repository.interface';
-import { ICoinTransactionRepository } from '../../domain/repositories/coin-transaction.repository.interface';
 import { ICampaignRepository } from '../../domain/repositories/campaign.repository.interface';
 import { Reward } from '../../domain/entities/reward.entity';
 import { CoinTransaction } from '../../domain/entities/coin-transaction.entity';
@@ -18,7 +16,7 @@ import { WebhookPayloadDto } from './dto/webhook-payload.dto';
  *
  * 重要な実装ポイント:
  * 1. べき等性保証: media_cashback_idで重複チェック（UNIQUE制約）
- * 2. トランザクション整合性: 3テーブルを原子的に更新
+ * 2. トランザクション整合性: UnitOfWork経由で3テーブルを原子的に更新
  * 3. エラーハンドリング: ALREADY_PROCESSED は特別扱い
  *
  * Clean Architecture原則:
@@ -32,10 +30,6 @@ export class ProcessWebhookUseCase {
   constructor(
     @Inject(TOKENS.IRewardRepository)
     private readonly rewardRepository: IRewardRepository,
-    @Inject(TOKENS.IUserCoinRepository)
-    private readonly userCoinRepository: IUserCoinRepository,
-    @Inject(TOKENS.ICoinTransactionRepository)
-    private readonly coinTransactionRepository: ICoinTransactionRepository,
     @Inject(TOKENS.ICampaignRepository)
     private readonly campaignRepository: ICampaignRepository,
     @Inject(TOKENS.ITransactionManager)
@@ -72,8 +66,8 @@ export class ProcessWebhookUseCase {
       throw new Error('ALREADY_PROCESSED');
     }
 
-    // 3. トランザクション内で3テーブル原子的更新
-    await this.transactionManager.execute(async () => {
+    // 3. トランザクション内で3テーブル原子的更新（UnitOfWork経由）
+    await this.transactionManager.execute(async (uow) => {
       const userId = parseInt(payload.media_user_code);
 
       // 3-1. Reward作成・保存
@@ -96,16 +90,16 @@ export class ProcessWebhookUseCase {
         processedAt: new Date(payload.processed_at),
         jwePayload: JSON.stringify(payload), // 万が一のために常に全データを保存
       });
-      await this.rewardRepository.save(reward);
+      await uow.rewardRepository.save(reward);
 
       // 3-2. UserCoin残高更新
-      let userCoin = await this.userCoinRepository.findByUserId(userId);
+      let userCoin = await uow.userCoinRepository.findByUserId(userId);
       if (!userCoin) {
         // 初回獲得時はUserCoin作成
         userCoin = UserCoin.create(userId);
       }
       userCoin.addBalance(payload.incentive_points);
-      await this.userCoinRepository.save(userCoin);
+      await uow.userCoinRepository.save(userCoin);
 
       // 3-3. CoinTransaction記録
       const transaction = CoinTransaction.createRewardTransaction(
@@ -117,7 +111,7 @@ export class ProcessWebhookUseCase {
         payload.media_cashback_id,
         `${campaign.getTitle()}参加`,
       );
-      await this.coinTransactionRepository.save(transaction);
+      await uow.coinTransactionRepository.save(transaction);
 
       this.logger.log(
         `Webhook処理完了: userId=${userId}, points=${payload.incentive_points}, balance=${userCoin.getBalance()}`,

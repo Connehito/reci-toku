@@ -5,6 +5,7 @@ import { RepositoryMockFactory } from '../../__test__/factories/repository.mock.
 import { ServiceMockFactory } from '../../__test__/factories/service.mock.factory';
 import { EntityFactory } from '../../__test__/factories/entity.factory';
 import { WebhookPayloadDto } from './dto/webhook-payload.dto';
+import { UnitOfWork } from '../../domain/services/transaction-manager.interface';
 
 // uuidをモック
 jest.mock('uuid', () => ({
@@ -13,34 +14,38 @@ jest.mock('uuid', () => ({
 
 describe('ProcessWebhookUseCase', () => {
   let useCase: ProcessWebhookUseCase;
+  // トランザクション外（べき等性チェック用）
   let mockRewardRepository: ReturnType<typeof RepositoryMockFactory.createRewardRepositoryMock>;
-  let mockUserCoinRepository: ReturnType<typeof RepositoryMockFactory.createUserCoinRepositoryMock>;
-  let mockCoinTransactionRepository: ReturnType<
+  let mockCampaignRepository: ReturnType<typeof RepositoryMockFactory.createCampaignRepositoryMock>;
+  // UnitOfWork内（トランザクション内で使用されるリポジトリ）
+  let uowRewardRepository: ReturnType<typeof RepositoryMockFactory.createRewardRepositoryMock>;
+  let uowUserCoinRepository: ReturnType<typeof RepositoryMockFactory.createUserCoinRepositoryMock>;
+  let uowCoinTransactionRepository: ReturnType<
     typeof RepositoryMockFactory.createCoinTransactionRepositoryMock
   >;
-  let mockCampaignRepository: ReturnType<typeof RepositoryMockFactory.createCampaignRepositoryMock>;
   let mockTransactionManager: ReturnType<typeof ServiceMockFactory.createTransactionManagerMock>;
 
   beforeEach(async () => {
-    // モックリポジトリの作成
+    // トランザクション外のモックリポジトリ
     mockRewardRepository = RepositoryMockFactory.createRewardRepositoryMock();
-    mockUserCoinRepository = RepositoryMockFactory.createUserCoinRepositoryMock();
-    mockCoinTransactionRepository = RepositoryMockFactory.createCoinTransactionRepositoryMock();
     mockCampaignRepository = RepositoryMockFactory.createCampaignRepositoryMock();
-    mockTransactionManager = ServiceMockFactory.createTransactionManagerMock();
+
+    // UnitOfWork用のモックリポジトリ
+    uowRewardRepository = RepositoryMockFactory.createRewardRepositoryMock();
+    uowUserCoinRepository = RepositoryMockFactory.createUserCoinRepositoryMock();
+    uowCoinTransactionRepository = RepositoryMockFactory.createCoinTransactionRepositoryMock();
+
+    const uow: UnitOfWork = {
+      rewardRepository: uowRewardRepository,
+      userCoinRepository: uowUserCoinRepository,
+      coinTransactionRepository: uowCoinTransactionRepository,
+    };
+    mockTransactionManager = ServiceMockFactory.createTransactionManagerMock(uow);
 
     const module: TestingModule = await Test.createTestingModule({
       providers: [
         ProcessWebhookUseCase,
         { provide: TOKENS.IRewardRepository, useValue: mockRewardRepository },
-        {
-          provide: TOKENS.IUserCoinRepository,
-          useValue: mockUserCoinRepository,
-        },
-        {
-          provide: TOKENS.ICoinTransactionRepository,
-          useValue: mockCoinTransactionRepository,
-        },
         {
           provide: TOKENS.ICampaignRepository,
           useValue: mockCampaignRepository,
@@ -88,7 +93,7 @@ describe('ProcessWebhookUseCase', () => {
 
       mockCampaignRepository.findByReceiptCampaignId.mockResolvedValue(campaign);
       mockRewardRepository.findByMediaCashbackId.mockResolvedValue(null); // 重複なし
-      mockUserCoinRepository.findByUserId.mockResolvedValue(userCoin);
+      uowUserCoinRepository.findByUserId.mockResolvedValue(userCoin);
 
       // Act
       await useCase.execute(payload);
@@ -96,9 +101,10 @@ describe('ProcessWebhookUseCase', () => {
       // Assert
       expect(mockCampaignRepository.findByReceiptCampaignId).toHaveBeenCalledWith('campaign_001');
       expect(mockRewardRepository.findByMediaCashbackId).toHaveBeenCalledWith('unique_001');
-      expect(mockRewardRepository.save).toHaveBeenCalledTimes(1);
-      expect(mockUserCoinRepository.save).toHaveBeenCalledTimes(1);
-      expect(mockCoinTransactionRepository.save).toHaveBeenCalledTimes(1);
+      // UnitOfWork経由でトランザクション内のリポジトリが使われる
+      expect(uowRewardRepository.save).toHaveBeenCalledTimes(1);
+      expect(uowUserCoinRepository.save).toHaveBeenCalledTimes(1);
+      expect(uowCoinTransactionRepository.save).toHaveBeenCalledTimes(1);
       expect(mockTransactionManager.execute).toHaveBeenCalledTimes(1);
     });
 
@@ -118,15 +124,15 @@ describe('ProcessWebhookUseCase', () => {
       const campaign = EntityFactory.createCampaign();
       mockCampaignRepository.findByReceiptCampaignId.mockResolvedValue(campaign);
       mockRewardRepository.findByMediaCashbackId.mockResolvedValue(null);
-      mockUserCoinRepository.findByUserId.mockResolvedValue(null); // 初回獲得
+      uowUserCoinRepository.findByUserId.mockResolvedValue(null); // 初回獲得
 
       // Act
       await useCase.execute(payload);
 
       // Assert
-      expect(mockUserCoinRepository.findByUserId).toHaveBeenCalledWith(99999);
-      expect(mockUserCoinRepository.save).toHaveBeenCalledTimes(1);
-      expect(mockCoinTransactionRepository.save).toHaveBeenCalledTimes(1);
+      expect(uowUserCoinRepository.findByUserId).toHaveBeenCalledWith(99999);
+      expect(uowUserCoinRepository.save).toHaveBeenCalledTimes(1);
+      expect(uowCoinTransactionRepository.save).toHaveBeenCalledTimes(1);
     });
 
     it('重複したmedia_cashback_idの場合はALREADY_PROCESSEDエラーをスローする', async () => {
@@ -152,9 +158,9 @@ describe('ProcessWebhookUseCase', () => {
 
       // Act & Assert
       await expect(useCase.execute(payload)).rejects.toThrow('ALREADY_PROCESSED');
-      expect(mockRewardRepository.save).not.toHaveBeenCalled();
-      expect(mockUserCoinRepository.save).not.toHaveBeenCalled();
-      expect(mockCoinTransactionRepository.save).not.toHaveBeenCalled();
+      expect(uowRewardRepository.save).not.toHaveBeenCalled();
+      expect(uowUserCoinRepository.save).not.toHaveBeenCalled();
+      expect(uowCoinTransactionRepository.save).not.toHaveBeenCalled();
     });
 
     it('キャンペーンが未登録の場合はエラーをスローする', async () => {
@@ -174,12 +180,12 @@ describe('ProcessWebhookUseCase', () => {
 
       // Act & Assert
       await expect(useCase.execute(payload)).rejects.toThrow('キャンペーンが未登録です');
-      expect(mockRewardRepository.save).not.toHaveBeenCalled();
-      expect(mockUserCoinRepository.save).not.toHaveBeenCalled();
-      expect(mockCoinTransactionRepository.save).not.toHaveBeenCalled();
+      expect(uowRewardRepository.save).not.toHaveBeenCalled();
+      expect(uowUserCoinRepository.save).not.toHaveBeenCalled();
+      expect(uowCoinTransactionRepository.save).not.toHaveBeenCalled();
     });
 
-    it('トランザクション内で3テーブルが原子的に更新される', async () => {
+    it('トランザクション内でUnitOfWork経由のリポジトリが使われる', async () => {
       // Arrange
       const payload: WebhookPayloadDto = {
         media_id: 'test_001',
@@ -197,16 +203,16 @@ describe('ProcessWebhookUseCase', () => {
 
       mockCampaignRepository.findByReceiptCampaignId.mockResolvedValue(campaign);
       mockRewardRepository.findByMediaCashbackId.mockResolvedValue(null);
-      mockUserCoinRepository.findByUserId.mockResolvedValue(userCoin);
+      uowUserCoinRepository.findByUserId.mockResolvedValue(userCoin);
 
       // Act
       await useCase.execute(payload);
 
-      // Assert - トランザクション実行確認
+      // Assert - UnitOfWork経由でトランザクション内のリポジトリが使われること
       expect(mockTransactionManager.execute).toHaveBeenCalledTimes(1);
-      expect(mockRewardRepository.save).toHaveBeenCalledTimes(1);
-      expect(mockUserCoinRepository.save).toHaveBeenCalledTimes(1);
-      expect(mockCoinTransactionRepository.save).toHaveBeenCalledTimes(1);
+      expect(uowRewardRepository.save).toHaveBeenCalledTimes(1);
+      expect(uowUserCoinRepository.save).toHaveBeenCalledTimes(1);
+      expect(uowCoinTransactionRepository.save).toHaveBeenCalledTimes(1);
     });
   });
 });
