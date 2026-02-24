@@ -2,6 +2,7 @@ import { Test, TestingModule } from '@nestjs/testing';
 import { BadRequestException } from '@nestjs/common';
 import { AuthController } from './auth.controller';
 import { GenerateJweTokenUseCase } from '../../../usecase/auth/generate-jwe-token.usecase';
+import { InvalidUserIdError } from '../../../domain/exceptions/invalid-user-id.error';
 
 describe('AuthController', () => {
   let controller: AuthController;
@@ -62,7 +63,7 @@ describe('AuthController', () => {
     it('不正なユーザーIDの場合はBadRequestExceptionをスローする', async () => {
       // Arrange
       const userId = 0;
-      mockGenerateJweTokenUseCase.execute.mockRejectedValue(new Error('不正なユーザーIDです'));
+      mockGenerateJweTokenUseCase.execute.mockRejectedValue(new InvalidUserIdError(userId));
 
       // Act & Assert
       await expect(controller.generateToken(userId)).rejects.toThrow(BadRequestException);

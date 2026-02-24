@@ -2,6 +2,7 @@ import { Injectable, Inject, Logger } from '@nestjs/common';
 import { TOKENS } from '../../domain/tokens';
 import { ISecretsService } from '../../domain/services/secrets.service.interface';
 import { IEncryptionService } from '../../domain/services/encryption.service.interface';
+import { InvalidUserIdError } from '../../domain/exceptions/invalid-user-id.error';
 
 /**
  * JWEトークン生成UseCase
@@ -35,7 +36,7 @@ export class GenerateJweTokenUseCase {
 
     // ユーザーIDのバリデーション
     if (!userId || userId <= 0) {
-      throw new Error('不正なユーザーIDです');
+      throw new InvalidUserIdError(userId);
     }
 
     // Secrets Managerから暗号化鍵とclient_id取得

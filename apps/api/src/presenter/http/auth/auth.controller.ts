@@ -1,5 +1,6 @@
 import { Controller, Get, Query, ParseIntPipe, Logger, BadRequestException } from '@nestjs/common';
 import { GenerateJweTokenUseCase } from '../../../usecase/auth/generate-jwe-token.usecase';
+import { InvalidUserIdError } from '../../../domain/exceptions/invalid-user-id.error';
 
 /**
  * 認証コントローラー
@@ -36,8 +37,8 @@ export class AuthController {
         error instanceof Error ? error.stack : String(error),
       );
 
-      if (error instanceof Error && error.message === '不正なユーザーIDです') {
-        throw new BadRequestException('不正なユーザーIDです');
+      if (error instanceof InvalidUserIdError) {
+        throw new BadRequestException(error.message);
       }
 
       throw error;

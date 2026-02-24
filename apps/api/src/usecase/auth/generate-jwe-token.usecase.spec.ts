@@ -2,6 +2,7 @@ import { Test, TestingModule } from '@nestjs/testing';
 import { GenerateJweTokenUseCase } from './generate-jwe-token.usecase';
 import { TOKENS } from '../../domain/tokens';
 import { ServiceMockFactory } from '../../__test__/factories/service.mock.factory';
+import { InvalidUserIdError } from '../../domain/exceptions/invalid-user-id.error';
 
 describe('GenerateJweTokenUseCase', () => {
   let useCase: GenerateJweTokenUseCase;
@@ -80,22 +81,22 @@ describe('GenerateJweTokenUseCase', () => {
       );
     });
 
-    it('不正なユーザーID（0）の場合はエラーをスローする', async () => {
+    it('不正なユーザーID（0）の場合はInvalidUserIdErrorをスローする', async () => {
       // Arrange
       const userId = 0;
 
       // Act & Assert
-      await expect(useCase.execute(userId)).rejects.toThrow('不正なユーザーIDです');
+      await expect(useCase.execute(userId)).rejects.toThrow(InvalidUserIdError);
       expect(mockSecretsService.getPMNCredentials).not.toHaveBeenCalled();
       expect(mockEncryptionService.encryptJWE).not.toHaveBeenCalled();
     });
 
-    it('不正なユーザーID（負の値）の場合はエラーをスローする', async () => {
+    it('不正なユーザーID（負の値）の場合はInvalidUserIdErrorをスローする', async () => {
       // Arrange
       const userId = -1;
 
       // Act & Assert
-      await expect(useCase.execute(userId)).rejects.toThrow('不正なユーザーIDです');
+      await expect(useCase.execute(userId)).rejects.toThrow(InvalidUserIdError);
       expect(mockSecretsService.getPMNCredentials).not.toHaveBeenCalled();
       expect(mockEncryptionService.encryptJWE).not.toHaveBeenCalled();
     });
