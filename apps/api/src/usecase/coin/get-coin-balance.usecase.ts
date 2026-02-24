@@ -3,6 +3,7 @@ import { TOKENS } from '../../domain/tokens';
 import { IUserCoinRepository } from '../../domain/repositories/user-coin.repository.interface';
 import { ICoinSettingRepository } from '../../domain/repositories/coin-setting.repository.interface';
 import { CoinBalanceResponseDto } from './dto/coin-balance-response.dto';
+import { InvalidUserIdError } from '../../domain/exceptions/invalid-user-id.error';
 
 /**
  * コイン残高照会UseCase
@@ -36,7 +37,7 @@ export class GetCoinBalanceUseCase {
 
     // ユーザーIDのバリデーション
     if (!userId || userId <= 0) {
-      throw new Error('不正なユーザーIDです');
+      throw new InvalidUserIdError(userId);
     }
 
     // ユーザーコイン残高取得

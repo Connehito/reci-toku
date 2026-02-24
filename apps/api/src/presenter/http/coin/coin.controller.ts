@@ -1,5 +1,6 @@
 import { Controller, Get, Param, ParseIntPipe, Logger, BadRequestException } from '@nestjs/common';
 import { GetCoinBalanceUseCase } from '../../../usecase/coin/get-coin-balance.usecase';
+import { InvalidUserIdError } from '../../../domain/exceptions/invalid-user-id.error';
 
 /**
  * コインコントローラー
@@ -34,7 +35,7 @@ export class CoinController {
         error instanceof Error ? error.stack : String(error),
       );
 
-      if (error instanceof Error && error.message === '不正なユーザーIDです') {
+      if (error instanceof InvalidUserIdError) {
         throw new BadRequestException('不正なユーザーIDです');
       }
 

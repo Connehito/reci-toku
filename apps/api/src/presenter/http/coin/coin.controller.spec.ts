@@ -3,6 +3,7 @@ import { BadRequestException } from '@nestjs/common';
 import { CoinController } from './coin.controller';
 import { GetCoinBalanceUseCase } from '../../../usecase/coin/get-coin-balance.usecase';
 import { CoinBalanceResponseDto } from '../../../usecase/coin/dto/coin-balance-response.dto';
+import { InvalidUserIdError } from '../../../domain/exceptions/invalid-user-id.error';
 
 describe('CoinController', () => {
   let controller: CoinController;
@@ -92,7 +93,7 @@ describe('CoinController', () => {
     it('不正なユーザーIDの場合はBadRequestExceptionをスローする', async () => {
       // Arrange
       const userId = 0;
-      mockGetCoinBalanceUseCase.execute.mockRejectedValue(new Error('不正なユーザーIDです'));
+      mockGetCoinBalanceUseCase.execute.mockRejectedValue(new InvalidUserIdError(0));
 
       // Act & Assert
       await expect(controller.getBalance(userId)).rejects.toThrow(BadRequestException);
