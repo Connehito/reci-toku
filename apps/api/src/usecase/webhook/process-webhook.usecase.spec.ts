@@ -4,7 +4,9 @@ import { TOKENS } from '../../domain/tokens';
 import { RepositoryMockFactory } from '../../__test__/factories/repository.mock.factory';
 import { ServiceMockFactory } from '../../__test__/factories/service.mock.factory';
 import { EntityFactory } from '../../__test__/factories/entity.factory';
-import { WebhookPayloadDto } from './dto/webhook-payload.dto';
+import { ProcessWebhookInput } from './dto/process-webhook.input';
+import { AlreadyProcessedError } from '../../domain/exceptions/already-processed.error';
+import { CampaignNotFoundError } from '../../domain/exceptions/campaign-not-found.error';
 import { UnitOfWork } from '../../domain/services/transaction-manager.interface';
 
 // uuidをモック
@@ -67,7 +69,7 @@ describe('ProcessWebhookUseCase', () => {
   describe('execute', () => {
     it('正常なWebhookペイロードでコインを付与できる', async () => {
       // Arrange
-      const payload: WebhookPayloadDto = {
+      const payload: ProcessWebhookInput = {
         media_id: 'test_001',
         media_user_code: '12345',
         media_cashback_id: 'unique_001',
@@ -110,7 +112,7 @@ describe('ProcessWebhookUseCase', () => {
 
     it('初回獲得時はUserCoinを作成する', async () => {
       // Arrange
-      const payload: WebhookPayloadDto = {
+      const payload: ProcessWebhookInput = {
         media_id: 'test_001',
         media_user_code: '99999',
         media_cashback_id: 'unique_002',
@@ -119,7 +121,7 @@ describe('ProcessWebhookUseCase', () => {
         incentive_points: 100,
         participation_at: '2026-02-20T10:00:00Z',
         processed_at: '2026-02-20T10:00:00Z',
-      } as WebhookPayloadDto;
+      } as ProcessWebhookInput;
 
       const campaign = EntityFactory.createCampaign();
       mockCampaignRepository.findByReceiptCampaignId.mockResolvedValue(campaign);
@@ -137,7 +139,7 @@ describe('ProcessWebhookUseCase', () => {
 
     it('重複したmedia_cashback_idの場合はALREADY_PROCESSEDエラーをスローする', async () => {
       // Arrange
-      const payload: WebhookPayloadDto = {
+      const payload: ProcessWebhookInput = {
         media_id: 'test_001',
         media_user_code: '12345',
         media_cashback_id: 'unique_001',
@@ -146,7 +148,7 @@ describe('ProcessWebhookUseCase', () => {
         incentive_points: 100,
         participation_at: '2026-02-20T10:00:00Z',
         processed_at: '2026-02-20T10:00:00Z',
-      } as WebhookPayloadDto;
+      } as ProcessWebhookInput;
 
       const campaign = EntityFactory.createCampaign();
       const existingReward = EntityFactory.createReward({
@@ -157,7 +159,7 @@ describe('ProcessWebhookUseCase', () => {
       mockRewardRepository.findByMediaCashbackId.mockResolvedValue(existingReward);
 
       // Act & Assert
-      await expect(useCase.execute(payload)).rejects.toThrow('ALREADY_PROCESSED');
+      await expect(useCase.execute(payload)).rejects.toThrow(AlreadyProcessedError);
       expect(uowRewardRepository.save).not.toHaveBeenCalled();
       expect(uowUserCoinRepository.save).not.toHaveBeenCalled();
       expect(uowCoinTransactionRepository.save).not.toHaveBeenCalled();
@@ -165,7 +167,7 @@ describe('ProcessWebhookUseCase', () => {
 
     it('キャンペーンが未登録の場合はエラーをスローする', async () => {
       // Arrange
-      const payload: WebhookPayloadDto = {
+      const payload: ProcessWebhookInput = {
         media_id: 'test_001',
         media_user_code: '12345',
         media_cashback_id: 'unique_003',
@@ -174,12 +176,12 @@ describe('ProcessWebhookUseCase', () => {
         incentive_points: 100,
         participation_at: '2026-02-20T10:00:00Z',
         processed_at: '2026-02-20T10:00:00Z',
-      } as WebhookPayloadDto;
+      } as ProcessWebhookInput;
 
       mockCampaignRepository.findByReceiptCampaignId.mockResolvedValue(null);
 
       // Act & Assert
-      await expect(useCase.execute(payload)).rejects.toThrow('キャンペーンが未登録です');
+      await expect(useCase.execute(payload)).rejects.toThrow(CampaignNotFoundError);
       expect(uowRewardRepository.save).not.toHaveBeenCalled();
       expect(uowUserCoinRepository.save).not.toHaveBeenCalled();
       expect(uowCoinTransactionRepository.save).not.toHaveBeenCalled();
@@ -187,7 +189,7 @@ describe('ProcessWebhookUseCase', () => {
 
     it('トランザクション内でUnitOfWork経由のリポジトリが使われる', async () => {
       // Arrange
-      const payload: WebhookPayloadDto = {
+      const payload: ProcessWebhookInput = {
         media_id: 'test_001',
         media_user_code: '12345',
         media_cashback_id: 'unique_004',
@@ -196,7 +198,7 @@ describe('ProcessWebhookUseCase', () => {
         incentive_points: 100,
         participation_at: '2026-02-20T10:00:00Z',
         processed_at: '2026-02-20T10:00:00Z',
-      } as WebhookPayloadDto;
+      } as ProcessWebhookInput;
 
       const campaign = EntityFactory.createCampaign();
       const userCoin = EntityFactory.createUserCoin();

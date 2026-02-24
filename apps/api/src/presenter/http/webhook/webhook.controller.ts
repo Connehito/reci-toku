@@ -8,7 +8,9 @@ import {
   ValidationPipe,
 } from '@nestjs/common';
 import { ProcessWebhookUseCase } from '../../../usecase/webhook/process-webhook.usecase';
-import { WebhookPayloadDto } from '../../../usecase/webhook/dto/webhook-payload.dto';
+import { WebhookPayloadDto } from './dto/webhook-payload.dto';
+import { AlreadyProcessedError } from '../../../domain/exceptions/already-processed.error';
+import { CampaignNotFoundError } from '../../../domain/exceptions/campaign-not-found.error';
 
 /**
  * Webhookコントローラー
@@ -47,7 +49,7 @@ export class WebhookController {
       return { status: 'success' };
     } catch (error) {
       // べき等性（Application層チェック）: 既に処理済みの場合は200 OKを返す（リトライさせない）
-      if (error instanceof Error && error.message === 'ALREADY_PROCESSED') {
+      if (error instanceof AlreadyProcessedError) {
         this.logger.warn(
           `重複したWebhookを受信（Application層）: cashbackId=${payload.media_cashback_id}`,
         );
@@ -68,7 +70,7 @@ export class WebhookController {
       }
 
       // キャンペーン未登録: 400 Bad Request（リトライさせない）
-      if (error instanceof Error && error.message.startsWith('キャンペーンが未登録です')) {
+      if (error instanceof CampaignNotFoundError) {
         this.logger.error(`キャンペーン未登録: ${error.message}`, error.stack);
         throw new BadRequestException('キャンペーンが未登録です');
       }

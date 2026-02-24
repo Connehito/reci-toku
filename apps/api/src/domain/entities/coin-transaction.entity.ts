@@ -1,3 +1,5 @@
+import { InvalidUserIdError } from '../exceptions/invalid-user-id.error';
+
 /**
  * CoinTransaction - コイン取引履歴（ドメインエンティティ）
  *
@@ -136,7 +138,7 @@ export class CoinTransaction {
 
   private validate(): void {
     if (this.userId <= 0) {
-      throw new Error('不正なユーザーIDです');
+      throw new InvalidUserIdError(this.userId);
     }
     if (this.balanceAfter < 0) {
       throw new Error('取引後残高は負の値にできません');

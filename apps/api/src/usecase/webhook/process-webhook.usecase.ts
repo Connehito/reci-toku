@@ -7,7 +7,9 @@ import { ICampaignRepository } from '../../domain/repositories/campaign.reposito
 import { Reward } from '../../domain/entities/reward.entity';
 import { CoinTransaction } from '../../domain/entities/coin-transaction.entity';
 import { UserCoin } from '../../domain/entities/user-coin.entity';
-import { WebhookPayloadDto } from './dto/webhook-payload.dto';
+import { ProcessWebhookInput } from './dto/process-webhook.input';
+import { AlreadyProcessedError } from '../../domain/exceptions/already-processed.error';
+import { CampaignNotFoundError } from '../../domain/exceptions/campaign-not-found.error';
 
 /**
  * Webhook処理UseCase
@@ -17,7 +19,7 @@ import { WebhookPayloadDto } from './dto/webhook-payload.dto';
  * 重要な実装ポイント:
  * 1. べき等性保証: media_cashback_idで重複チェック（UNIQUE制約）
  * 2. トランザクション整合性: UnitOfWork経由で3テーブルを原子的に更新
- * 3. エラーハンドリング: ALREADY_PROCESSED は特別扱い
+ * 3. エラーハンドリング: AlreadyProcessedError / CampaignNotFoundError で判別
  *
  * Clean Architecture原則:
  * - Domain層のInterfaceにのみ依存
@@ -40,9 +42,10 @@ export class ProcessWebhookUseCase {
    * Webhookを処理してコインを付与
    *
    * @param payload - Webhookペイロード
-   * @throws Error - キャンペーン未登録、重複処理
+   * @throws CampaignNotFoundError - キャンペーン未登録
+   * @throws AlreadyProcessedError - 重複処理
    */
-  async execute(payload: WebhookPayloadDto): Promise<void> {
+  async execute(payload: ProcessWebhookInput): Promise<void> {
     this.logger.log(
       `Webhook処理開始: userId=${payload.media_user_code}, cashbackId=${payload.media_cashback_id}`,
     );
@@ -52,9 +55,8 @@ export class ProcessWebhookUseCase {
       payload.receipt_campaign_id,
     );
     if (!campaign) {
-      const errorMsg = `キャンペーンが未登録です: ${payload.receipt_campaign_id}`;
-      this.logger.error(errorMsg);
-      throw new Error(errorMsg);
+      this.logger.error(`キャンペーンが未登録です: ${payload.receipt_campaign_id}`);
+      throw new CampaignNotFoundError(payload.receipt_campaign_id);
     }
 
     // 2. べき等性チェック（重複処理防止）
@@ -63,7 +65,7 @@ export class ProcessWebhookUseCase {
     );
     if (existingReward) {
       this.logger.warn(`重複したWebhookを検出: cashbackId=${payload.media_cashback_id}`);
-      throw new Error('ALREADY_PROCESSED');
+      throw new AlreadyProcessedError(payload.media_cashback_id);
     }
 
     // 3. トランザクション内で3テーブル原子的更新（UnitOfWork経由）

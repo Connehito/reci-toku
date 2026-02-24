@@ -1,9 +1,18 @@
-import { IsString, IsNumber, IsNotEmpty, Length, IsDateString, IsOptional } from 'class-validator';
+import {
+  IsString,
+  IsNumber,
+  IsNotEmpty,
+  Length,
+  IsDateString,
+  IsOptional,
+  Matches,
+} from 'class-validator';
 
 /**
  * Webhook受信ペイロードDTO
  *
  * Performance Media Networkから送信されるWebhookのペイロード
+ * Presenter層に配置（class-validatorはフレームワーク依存）
  */
 export class WebhookPayloadDto {
   @IsString()
@@ -12,6 +21,7 @@ export class WebhookPayloadDto {
 
   @IsString()
   @IsNotEmpty()
+  @Matches(/^\d+$/, { message: 'media_user_codeは数値文字列である必要があります' })
   media_user_code!: string;
 
   @IsString()

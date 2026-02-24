@@ -1,3 +1,5 @@
+import { InvalidUserIdError } from '../exceptions/invalid-user-id.error';
+
 /**
  * UserCoin - ユーザーコイン残高（ドメインエンティティ）
  *
@@ -44,7 +46,7 @@ export class UserCoin {
       throw new Error('残高は負の値にできません');
     }
     if (this.userId <= 0) {
-      throw new Error('不正なユーザーIDです');
+      throw new InvalidUserIdError(this.userId);
     }
   }
 

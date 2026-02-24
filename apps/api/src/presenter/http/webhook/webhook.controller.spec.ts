@@ -2,12 +2,31 @@ import { Test, TestingModule } from '@nestjs/testing';
 import { BadRequestException } from '@nestjs/common';
 import { WebhookController } from './webhook.controller';
 import { ProcessWebhookUseCase } from '../../../usecase/webhook/process-webhook.usecase';
-import { WebhookPayloadDto } from '../../../usecase/webhook/dto/webhook-payload.dto';
+import { WebhookPayloadDto } from './dto/webhook-payload.dto';
+import { AlreadyProcessedError } from '../../../domain/exceptions/already-processed.error';
+import { CampaignNotFoundError } from '../../../domain/exceptions/campaign-not-found.error';
 
 // uuidをモック
 jest.mock('uuid', () => ({
   v4: jest.fn(() => 'mocked-uuid-1234'),
 }));
+
+/**
+ * デフォルトのWebhookペイロードを生成するヘルパー
+ */
+function createDefaultPayload(overrides?: Partial<WebhookPayloadDto>): WebhookPayloadDto {
+  return {
+    media_id: 'test_001',
+    media_user_code: '12345',
+    media_cashback_id: 'unique_001',
+    media_cashback_code: '123456789012345',
+    receipt_campaign_id: 'campaign_001',
+    incentive_points: 100,
+    participation_at: '2026-02-20T10:00:00Z',
+    processed_at: '2026-02-20T10:00:00Z',
+    ...overrides,
+  } as WebhookPayloadDto;
+}
 
 describe('WebhookController', () => {
   let controller: WebhookController;
@@ -38,17 +57,7 @@ describe('WebhookController', () => {
   describe('handleWebhook', () => {
     it('正常なペイロードで200 OKとsuccessを返す', async () => {
       // Arrange
-      const payload: WebhookPayloadDto = {
-        media_id: 'test_001',
-        media_user_code: '12345',
-        media_cashback_id: 'unique_001',
-        media_cashback_code: '123456789012345',
-        receipt_campaign_id: 'campaign_001',
-        incentive_points: 100,
-        participation_at: '2026-02-20T10:00:00Z',
-        processed_at: '2026-02-20T10:00:00Z',
-      } as WebhookPayloadDto;
-
+      const payload = createDefaultPayload();
       mockProcessWebhookUseCase.execute.mockResolvedValue(undefined);
 
       // Act
@@ -62,18 +71,10 @@ describe('WebhookController', () => {
 
     it('重複ペイロード（Application層チェック）で200 OKとalready_processedを返す', async () => {
       // Arrange
-      const payload: WebhookPayloadDto = {
-        media_id: 'test_001',
-        media_user_code: '12345',
-        media_cashback_id: 'unique_001',
-        media_cashback_code: '123456789012345',
-        receipt_campaign_id: 'campaign_001',
-        incentive_points: 100,
-        participation_at: '2026-02-20T10:00:00Z',
-        processed_at: '2026-02-20T10:00:00Z',
-      } as WebhookPayloadDto;
-
-      mockProcessWebhookUseCase.execute.mockRejectedValue(new Error('ALREADY_PROCESSED'));
+      const payload = createDefaultPayload();
+      mockProcessWebhookUseCase.execute.mockRejectedValue(
+        new AlreadyProcessedError('unique_001'),
+      );
 
       // Act
       const response = await controller.handleWebhook(payload);
@@ -85,16 +86,7 @@ describe('WebhookController', () => {
 
     it('重複ペイロード（DB制約エラー）で200 OKとalready_processedを返す', async () => {
       // Arrange
-      const payload: WebhookPayloadDto = {
-        media_id: 'test_001',
-        media_user_code: '12345',
-        media_cashback_id: 'unique_001',
-        media_cashback_code: '123456789012345',
-        receipt_campaign_id: 'campaign_001',
-        incentive_points: 100,
-        participation_at: '2026-02-20T10:00:00Z',
-        processed_at: '2026-02-20T10:00:00Z',
-      } as WebhookPayloadDto;
+      const payload = createDefaultPayload();
 
       // MySQL UNIQUE制約違反エラーをシミュレート
       const duplicateError = new Error('Duplicate entry') as Error & { code: string };
@@ -111,19 +103,12 @@ describe('WebhookController', () => {
 
     it('キャンペーン未登録で400 Bad Requestを返す', async () => {
       // Arrange
-      const payload: WebhookPayloadDto = {
-        media_id: 'test_001',
-        media_user_code: '12345',
+      const payload = createDefaultPayload({
         media_cashback_id: 'unique_002',
-        media_cashback_code: '123456789012345',
         receipt_campaign_id: 'campaign_999',
-        incentive_points: 100,
-        participation_at: '2026-02-20T10:00:00Z',
-        processed_at: '2026-02-20T10:00:00Z',
-      } as WebhookPayloadDto;
-
+      });
       mockProcessWebhookUseCase.execute.mockRejectedValue(
-        new Error('キャンペーンが未登録です: campaign_999'),
+        new CampaignNotFoundError('campaign_999'),
       );
 
       // Act & Assert
@@ -133,17 +118,7 @@ describe('WebhookController', () => {
 
     it('予期しないエラーで500 Internal Server Errorを返す', async () => {
       // Arrange
-      const payload: WebhookPayloadDto = {
-        media_id: 'test_001',
-        media_user_code: '12345',
-        media_cashback_id: 'unique_003',
-        media_cashback_code: '123456789012345',
-        receipt_campaign_id: 'campaign_001',
-        incentive_points: 100,
-        participation_at: '2026-02-20T10:00:00Z',
-        processed_at: '2026-02-20T10:00:00Z',
-      } as WebhookPayloadDto;
-
+      const payload = createDefaultPayload({ media_cashback_id: 'unique_003' });
       const mockError = new Error('Database connection failed');
       mockProcessWebhookUseCase.execute.mockRejectedValue(mockError);
 
@@ -154,17 +129,7 @@ describe('WebhookController', () => {
 
     it('トランザクションエラーで500 Internal Server Errorを返す', async () => {
       // Arrange
-      const payload: WebhookPayloadDto = {
-        media_id: 'test_001',
-        media_user_code: '12345',
-        media_cashback_id: 'unique_004',
-        media_cashback_code: '123456789012345',
-        receipt_campaign_id: 'campaign_001',
-        incentive_points: 100,
-        participation_at: '2026-02-20T10:00:00Z',
-        processed_at: '2026-02-20T10:00:00Z',
-      } as WebhookPayloadDto;
-
+      const payload = createDefaultPayload({ media_cashback_id: 'unique_004' });
       const mockError = new Error('Transaction failed');
       mockProcessWebhookUseCase.execute.mockRejectedValue(mockError);
 

@@ -1,3 +1,5 @@
+import { InvalidUserIdError } from '../exceptions/invalid-user-id.error';
+
 /**
  * Reward - 報酬履歴（ドメインエンティティ）
  *
@@ -119,7 +121,7 @@ export class Reward {
 
   private validate(): void {
     if (this.userId <= 0) {
-      throw new Error('不正なユーザーIDです');
+      throw new InvalidUserIdError(this.userId);
     }
     if (this.incentivePoints <= 0) {
       throw new Error('付与ポイントは正の値である必要があります');
