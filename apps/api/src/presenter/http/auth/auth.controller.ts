@@ -1,4 +1,12 @@
-import { Controller, Get, Query, ParseIntPipe, Logger, BadRequestException } from '@nestjs/common';
+import {
+  Controller,
+  Get,
+  Header,
+  Query,
+  ParseIntPipe,
+  Logger,
+  BadRequestException,
+} from '@nestjs/common';
 import { GenerateJweTokenUseCase } from '../../../usecase/auth/generate-jwe-token.usecase';
 import { InvalidUserIdError } from '../../../domain/exceptions/invalid-user-id.error';
 
@@ -24,6 +32,7 @@ export class AuthController {
    * Response: { "token": "eyJhbGciOiJkaXIiLCJlbmMiOiJBMjU2R0NNIiwia2lkIjoiY2xpZW50X2lkIn0..." }
    */
   @Get('token')
+  @Header('Cache-Control', 'no-store')
   async generateToken(@Query('userId', ParseIntPipe) userId: number) {
     try {
       this.logger.log(`JWEトークン生成リクエスト: userId=${userId}`);

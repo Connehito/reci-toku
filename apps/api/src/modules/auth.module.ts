@@ -6,7 +6,7 @@ import { AuthController } from '../presenter/http/auth/auth.controller';
  * Auth Module
  *
  * 認証関連のUseCase、Controllerを管理
- * InfrastructureModuleから必要なサービスをインポート
+ * 認証関連で利用するサービスは、@Global指定されたInfrastructureModuleから提供される
  */
 @Module({
   providers: [GenerateJweTokenUseCase],
