@@ -18,7 +18,11 @@ import { IEncryptionService } from '../../domain/services/encryption.service.int
 export class JoseEncryptionService implements IEncryptionService {
   private readonly logger = new Logger(JoseEncryptionService.name);
 
-  async encryptJWE(payload: object, clientId: string, encryptionKey: string): Promise<string> {
+  async encryptJWE(
+    payload: Record<string, unknown>,
+    clientId: string,
+    encryptionKey: string,
+  ): Promise<string> {
     try {
       const key = Buffer.from(encryptionKey, 'base64');
 
@@ -37,7 +41,7 @@ export class JoseEncryptionService implements IEncryptionService {
     }
   }
 
-  async decryptJWE(jwe: string, encryptionKey: string): Promise<object> {
+  async decryptJWE(jwe: string, encryptionKey: string): Promise<Record<string, unknown>> {
     try {
       const key = Buffer.from(encryptionKey, 'base64');
       const { plaintext } = await jose.compactDecrypt(jwe, key);
