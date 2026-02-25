@@ -9,11 +9,6 @@ import { AlreadyProcessedError } from '../../domain/exceptions/already-processed
 import { CampaignNotFoundError } from '../../domain/exceptions/campaign-not-found.error';
 import { UnitOfWork } from '../../domain/services/transaction-manager.interface';
 
-// uuidをモック
-jest.mock('uuid', () => ({
-  v4: jest.fn(() => 'mocked-uuid-1234'),
-}));
-
 describe('ProcessWebhookUseCase', () => {
   let useCase: ProcessWebhookUseCase;
   // トランザクション外（べき等性チェック用）
@@ -93,8 +88,13 @@ describe('ProcessWebhookUseCase', () => {
         balance: 50,
       });
 
+      const savedReward = EntityFactory.createReward({
+        mediaCashbackId: 'unique_001',
+      });
+
       mockCampaignRepository.findByReceiptCampaignId.mockResolvedValue(campaign);
       mockRewardRepository.findByMediaCashbackId.mockResolvedValue(null); // 重複なし
+      uowRewardRepository.save.mockResolvedValue(savedReward);
       uowUserCoinRepository.findByUserId.mockResolvedValue(userCoin);
 
       // Act
@@ -124,8 +124,13 @@ describe('ProcessWebhookUseCase', () => {
       } as ProcessWebhookInput;
 
       const campaign = EntityFactory.createCampaign();
+      const savedReward = EntityFactory.createReward({
+        mediaCashbackId: 'unique_002',
+      });
+
       mockCampaignRepository.findByReceiptCampaignId.mockResolvedValue(campaign);
       mockRewardRepository.findByMediaCashbackId.mockResolvedValue(null);
+      uowRewardRepository.save.mockResolvedValue(savedReward);
       uowUserCoinRepository.findByUserId.mockResolvedValue(null); // 初回獲得
 
       // Act
@@ -202,9 +207,13 @@ describe('ProcessWebhookUseCase', () => {
 
       const campaign = EntityFactory.createCampaign();
       const userCoin = EntityFactory.createUserCoin();
+      const savedReward = EntityFactory.createReward({
+        mediaCashbackId: 'unique_004',
+      });
 
       mockCampaignRepository.findByReceiptCampaignId.mockResolvedValue(campaign);
       mockRewardRepository.findByMediaCashbackId.mockResolvedValue(null);
+      uowRewardRepository.save.mockResolvedValue(savedReward);
       uowUserCoinRepository.findByUserId.mockResolvedValue(userCoin);
 
       // Act

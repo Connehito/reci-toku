@@ -2,7 +2,6 @@ import { Campaign } from './campaign.entity';
 
 describe('Campaign Entity', () => {
   const createValidCampaignParams = () => ({
-    id: '1',
     receiptCampaignId: 'CAMPAIGN001',
     receiptCampaignName: 'テストキャンペーン',
     receiptCampaignImage: 'https://example.com/image.jpg',
@@ -31,7 +30,7 @@ describe('Campaign Entity', () => {
       const campaign = Campaign.create(params);
 
       // Assert
-      expect(campaign.getId()).toBe('1');
+      expect(campaign.getId()).toBeNull();
       expect(campaign.getReceiptCampaignId()).toBe('CAMPAIGN001');
       expect(campaign.getIncentivePoints()).toBe(500);
       expect(campaign.getIsPublished()).toBe(false);

@@ -58,6 +58,26 @@ describe('CoinTransactionMapper', () => {
       expect(schema.rewardId).toBeNull();
       expect(schema.mediaCashbackId).toBeNull();
     });
+
+    it('IDがnullのEntityの場合、schema.idをセットしない', () => {
+      // Arrange
+      const entity = CoinTransaction.createRewardTransaction(
+        100,
+        500,
+        1500,
+        '200',
+        'CASHBACK123',
+        'レシートリワード獲得',
+      );
+
+      // Act
+      const schema = CoinTransactionMapper.toSchema(entity);
+
+      // Assert
+      expect(schema).toBeInstanceOf(CoinTransactionSchema);
+      expect(schema.id).toBeUndefined();
+      expect(schema.userId).toBe(100);
+    });
   });
 
   describe('toDomain', () => {

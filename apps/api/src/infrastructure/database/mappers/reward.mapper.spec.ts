@@ -51,6 +51,36 @@ describe('RewardMapper', () => {
       expect(schema.jwePayload).toBe('jwe_payload_example');
       expect(schema.createdAt).toEqual(new Date('2025-01-01T00:00:00Z'));
     });
+
+    it('IDがnullのEntityの場合、schema.idをセットしない', () => {
+      // Arrange
+      const entity = Reward.create({
+        userId: 100,
+        campaignId: '200',
+        mediaId: '300',
+        mediaUserCode: 'USER123',
+        mediaCashbackId: 'CASHBACK456',
+        mediaCashbackCode: 'CODE78901234567',
+        receiptCampaignId: 'CAMPAIGN001',
+        receiptCampaignName: 'テストキャンペーン',
+        receiptCampaignImage: 'https://example.com/image.jpg',
+        companyId: 'COMPANY001',
+        companyName: 'テスト企業',
+        serviceType: 'RECEIPT',
+        incentivePoints: 500,
+        participationAt: new Date('2025-01-01T00:00:00Z'),
+        processedAt: new Date('2025-01-02T00:00:00Z'),
+        jwePayload: 'jwe_payload_example',
+      });
+
+      // Act
+      const schema = RewardMapper.toSchema(entity);
+
+      // Assert
+      expect(schema).toBeInstanceOf(RewardSchema);
+      expect(schema.id).toBeUndefined();
+      expect(schema.userId).toBe(100);
+    });
   });
 
   describe('toDomain', () => {

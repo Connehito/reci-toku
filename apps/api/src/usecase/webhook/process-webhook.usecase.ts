@@ -1,5 +1,4 @@
 import { Injectable, Inject, Logger } from '@nestjs/common';
-import { v4 as uuidv4 } from 'uuid';
 import { TOKENS } from '../../domain/tokens';
 import { ITransactionManager } from '../../domain/services/transaction-manager.interface';
 import { IRewardRepository } from '../../domain/repositories/reward.repository.interface';
@@ -72,11 +71,10 @@ export class ProcessWebhookUseCase {
     await this.transactionManager.execute(async (uow) => {
       const userId = parseInt(payload.media_user_code, 10);
 
-      // 3-1. Reward作成・保存
+      // 3-1. Reward作成・保存（IDはDB AUTO_INCREMENTで採番）
       const reward = Reward.create({
-        id: uuidv4(),
         userId,
-        campaignId: campaign.getId(),
+        campaignId: campaign.getId()!,
         mediaId: payload.media_id,
         mediaUserCode: payload.media_user_code,
         mediaCashbackId: payload.media_cashback_id,
@@ -92,7 +90,7 @@ export class ProcessWebhookUseCase {
         processedAt: new Date(payload.processed_at),
         jwePayload: JSON.stringify(payload), // 万が一のために常に全データを保存
       });
-      await uow.rewardRepository.save(reward);
+      const savedReward = await uow.rewardRepository.save(reward);
 
       // 3-2. UserCoin残高更新
       let userCoin = await uow.userCoinRepository.findByUserId(userId);
@@ -103,13 +101,12 @@ export class ProcessWebhookUseCase {
       userCoin.addBalance(payload.incentive_points);
       await uow.userCoinRepository.save(userCoin);
 
-      // 3-3. CoinTransaction記録
+      // 3-3. CoinTransaction記録（IDはDB AUTO_INCREMENTで採番）
       const transaction = CoinTransaction.createRewardTransaction(
-        uuidv4(),
         userId,
         payload.incentive_points,
         userCoin.getBalance(),
-        reward.getId(),
+        savedReward.getId()!,
         payload.media_cashback_id,
         `${campaign.getTitle()}参加`,
       );

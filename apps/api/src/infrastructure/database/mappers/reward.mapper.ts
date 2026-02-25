@@ -10,7 +10,11 @@ export class RewardMapper {
    */
   static toSchema(entity: Reward): RewardSchema {
     const schema = new RewardSchema();
-    schema.id = entity.getId();
+    // IDがnullの場合はAUTO_INCREMENTに任せる
+    const id = entity.getId();
+    if (id !== null) {
+      schema.id = id;
+    }
     schema.userId = entity.getUserId();
     schema.campaignId = entity.getCampaignId();
     schema.mediaId = entity.getMediaId();

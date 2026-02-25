@@ -10,7 +10,11 @@ export class CampaignMapper {
    */
   static toSchema(entity: Campaign): CampaignSchema {
     const schema = new CampaignSchema();
-    schema.id = entity.getId();
+    // IDがnullの場合はAUTO_INCREMENTに任せる
+    const id = entity.getId();
+    if (id !== null) {
+      schema.id = id;
+    }
     schema.receiptCampaignId = entity.getReceiptCampaignId();
     schema.receiptCampaignName = entity.getReceiptCampaignName();
     schema.receiptCampaignImage = entity.getReceiptCampaignImage();

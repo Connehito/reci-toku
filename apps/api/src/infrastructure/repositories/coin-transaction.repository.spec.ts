@@ -221,10 +221,9 @@ describe('CoinTransactionRepository', () => {
   });
 
   describe('save', () => {
-    it('報酬取引を保存できる', async () => {
+    it('報酬取引を保存できる（IDはAUTO_INCREMENTに任せる）', async () => {
       // Arrange
       const transaction = CoinTransaction.createRewardTransaction(
-        '1',
         100,
         500,
         1000,
@@ -241,21 +240,15 @@ describe('CoinTransactionRepository', () => {
       // Assert
       expect(mockRepository.save).toHaveBeenCalled();
       const savedSchema = mockRepository.save.mock.calls[0][0];
-      expect(savedSchema.id).toBe('1');
+      expect(savedSchema.id).toBeUndefined(); // IDはnull → AUTO_INCREMENTに任せる
       expect(savedSchema.userId).toBe(100);
       expect(savedSchema.amount).toBe(500);
       expect(savedSchema.transactionType).toBe(TransactionType.REWARD);
     });
 
-    it('交換取引を保存できる', async () => {
+    it('交換取引を保存できる（IDはAUTO_INCREMENTに任せる）', async () => {
       // Arrange
-      const transaction = CoinTransaction.createExchangeTransaction(
-        '2',
-        200,
-        -300,
-        700,
-        'ギフト交換',
-      );
+      const transaction = CoinTransaction.createExchangeTransaction(200, -300, 700, 'ギフト交換');
 
       mockRepository.save.mockResolvedValue({} as CoinTransactionSchema);
 
@@ -265,20 +258,14 @@ describe('CoinTransactionRepository', () => {
       // Assert
       expect(mockRepository.save).toHaveBeenCalled();
       const savedSchema = mockRepository.save.mock.calls[0][0];
-      expect(savedSchema.id).toBe('2');
+      expect(savedSchema.id).toBeUndefined(); // IDはnull → AUTO_INCREMENTに任せる
       expect(savedSchema.amount).toBe(-300);
       expect(savedSchema.transactionType).toBe(TransactionType.EXCHANGE);
     });
 
-    it('失効取引を保存できる', async () => {
+    it('失効取引を保存できる（IDはAUTO_INCREMENTに任せる）', async () => {
       // Arrange
-      const transaction = CoinTransaction.createExpireTransaction(
-        '3',
-        300,
-        -100,
-        0,
-        '有効期限切れ',
-      );
+      const transaction = CoinTransaction.createExpireTransaction(300, -100, 0, '有効期限切れ');
 
       mockRepository.save.mockResolvedValue({} as CoinTransactionSchema);
 
@@ -288,7 +275,7 @@ describe('CoinTransactionRepository', () => {
       // Assert
       expect(mockRepository.save).toHaveBeenCalled();
       const savedSchema = mockRepository.save.mock.calls[0][0];
-      expect(savedSchema.id).toBe('3');
+      expect(savedSchema.id).toBeUndefined(); // IDはnull → AUTO_INCREMENTに任せる
       expect(savedSchema.amount).toBe(-100);
       expect(savedSchema.transactionType).toBe(TransactionType.EXPIRE);
     });

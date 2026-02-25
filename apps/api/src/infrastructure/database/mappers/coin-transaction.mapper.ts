@@ -10,7 +10,11 @@ export class CoinTransactionMapper {
    */
   static toSchema(entity: CoinTransaction): CoinTransactionSchema {
     const schema = new CoinTransactionSchema();
-    schema.id = entity.getId();
+    // IDがnullの場合はAUTO_INCREMENTに任せる
+    const id = entity.getId();
+    if (id !== null) {
+      schema.id = id;
+    }
     schema.userId = entity.getUserId();
     schema.amount = entity.getAmount();
     schema.balanceAfter = entity.getBalanceAfter();

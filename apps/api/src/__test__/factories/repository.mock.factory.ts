@@ -30,7 +30,7 @@ export class RepositoryMockFactory {
       findByMediaCashbackId: jest.fn(),
       findByUserId: jest.fn(),
       findByCampaignId: jest.fn(),
-      save: jest.fn(),
+      save: jest.fn().mockImplementation((reward) => Promise.resolve(reward)),
     };
   }
 

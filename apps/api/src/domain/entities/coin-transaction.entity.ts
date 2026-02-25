@@ -13,7 +13,7 @@ export enum TransactionType {
 
 export class CoinTransaction {
   private constructor(
-    private readonly id: string,
+    private readonly id: string | null,
     private readonly userId: number,
     private readonly amount: number,
     private readonly balanceAfter: number,
@@ -30,7 +30,6 @@ export class CoinTransaction {
    * 報酬による付与トランザクションを作成
    */
   static createRewardTransaction(
-    id: string,
     userId: number,
     amount: number,
     balanceAfter: number,
@@ -43,7 +42,7 @@ export class CoinTransaction {
     }
 
     return new CoinTransaction(
-      id,
+      null,
       userId,
       amount,
       balanceAfter,
@@ -59,7 +58,6 @@ export class CoinTransaction {
    * 交換による消費トランザクションを作成
    */
   static createExchangeTransaction(
-    id: string,
     userId: number,
     amount: number,
     balanceAfter: number,
@@ -70,7 +68,7 @@ export class CoinTransaction {
     }
 
     return new CoinTransaction(
-      id,
+      null,
       userId,
       amount,
       balanceAfter,
@@ -86,7 +84,6 @@ export class CoinTransaction {
    * 失効トランザクションを作成
    */
   static createExpireTransaction(
-    id: string,
     userId: number,
     amount: number,
     balanceAfter: number,
@@ -97,7 +94,7 @@ export class CoinTransaction {
     }
 
     return new CoinTransaction(
-      id,
+      null,
       userId,
       amount,
       balanceAfter,
@@ -146,7 +143,7 @@ export class CoinTransaction {
   }
 
   // Getters
-  getId(): string {
+  getId(): string | null {
     return this.id;
   }
 

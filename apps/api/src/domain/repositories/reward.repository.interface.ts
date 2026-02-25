@@ -29,6 +29,7 @@ export interface IRewardRepository {
 
   /**
    * 報酬を保存（作成のみ、更新は不可）
+   * DB採番されたIDを持つEntityを返却する
    */
-  save(reward: Reward): Promise<void>;
+  save(reward: Reward): Promise<Reward>;
 }

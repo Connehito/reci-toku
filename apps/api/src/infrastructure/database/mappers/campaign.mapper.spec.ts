@@ -48,6 +48,37 @@ describe('CampaignMapper', () => {
       expect(schema.displayOrder).toBe(1);
     });
 
+    it('IDがnullのEntityの場合、schema.idをセットしない', () => {
+      // Arrange
+      const entity = Campaign.create({
+        receiptCampaignId: 'CAMPAIGN001',
+        receiptCampaignName: 'テストキャンペーン',
+        receiptCampaignImage: 'https://example.com/image.jpg',
+        companyName: 'テスト企業',
+        companyId: 'COMPANY001',
+        incentivePoints: 500,
+        serviceType: 'RECEIPT',
+        isAllReceiptCampaign: true,
+        missionType: 'PURCHASE',
+        missionOpenAt: new Date('2025-01-01T00:00:00Z'),
+        missionCloseAt: new Date('2025-12-31T23:59:59Z'),
+        priceText: '1000円以上',
+        title: 'テストキャンペーンタイトル',
+        description: 'テストキャンペーン説明',
+        imageUrl: 'https://example.com/campaign.jpg',
+        displayOrder: 1,
+        createdBy: 100,
+      });
+
+      // Act
+      const schema = CampaignMapper.toSchema(entity);
+
+      // Assert
+      expect(schema).toBeInstanceOf(CampaignSchema);
+      expect(schema.id).toBeUndefined();
+      expect(schema.receiptCampaignId).toBe('CAMPAIGN001');
+    });
+
     it('isAllReceiptCampaign=false の場合、0に変換される', () => {
       // Arrange
       const entity = Campaign.reconstruct(
