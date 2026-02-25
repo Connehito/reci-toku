@@ -1,6 +1,9 @@
 import { ISecretsService } from '../../domain/services/secrets.service.interface';
 import { IEncryptionService } from '../../domain/services/encryption.service.interface';
-import { ITransactionManager, UnitOfWork } from '../../domain/services/transaction-manager.interface';
+import {
+  ITransactionManager,
+  UnitOfWork,
+} from '../../domain/services/transaction-manager.interface';
 import { RepositoryMockFactory } from './repository.mock.factory';
 
 /**
