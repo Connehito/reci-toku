@@ -44,7 +44,10 @@ export class JoseEncryptionService implements IEncryptionService {
   async decryptJWE(jwe: string, encryptionKey: string): Promise<Record<string, unknown>> {
     try {
       const key = Buffer.from(encryptionKey, 'base64');
-      const { plaintext } = await jose.compactDecrypt(jwe, key);
+      const { plaintext } = await jose.compactDecrypt(jwe, key, {
+        keyManagementAlgorithms: ['dir'],
+        contentEncryptionAlgorithms: ['A256GCM'],
+      });
       return JSON.parse(new TextDecoder().decode(plaintext));
     } catch (error) {
       this.logger.error('JWE復号化に失敗しました', error);
