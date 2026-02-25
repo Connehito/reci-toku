@@ -70,7 +70,7 @@ export class ProcessWebhookUseCase {
 
     // 3. トランザクション内で3テーブル原子的更新（UnitOfWork経由）
     await this.transactionManager.execute(async (uow) => {
-      const userId = parseInt(payload.media_user_code);
+      const userId = parseInt(payload.media_user_code, 10);
 
       // 3-1. Reward作成・保存
       const reward = Reward.create({

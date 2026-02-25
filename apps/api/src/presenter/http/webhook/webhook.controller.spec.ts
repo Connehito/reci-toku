@@ -6,7 +6,7 @@ import { WebhookPayloadDto } from './dto/webhook-payload.dto';
 import { AlreadyProcessedError } from '../../../domain/exceptions/already-processed.error';
 import { CampaignNotFoundError } from '../../../domain/exceptions/campaign-not-found.error';
 
-// uuidをモック
+// uuidをモック（UseCase依存チェーン経由でESM importの解決に必要）
 jest.mock('uuid', () => ({
   v4: jest.fn(() => 'mocked-uuid-1234'),
 }));
@@ -72,9 +72,7 @@ describe('WebhookController', () => {
     it('重複ペイロード（Application層チェック）で200 OKとalready_processedを返す', async () => {
       // Arrange
       const payload = createDefaultPayload();
-      mockProcessWebhookUseCase.execute.mockRejectedValue(
-        new AlreadyProcessedError('unique_001'),
-      );
+      mockProcessWebhookUseCase.execute.mockRejectedValue(new AlreadyProcessedError('unique_001'));
 
       // Act
       const response = await controller.handleWebhook(payload);
@@ -88,9 +86,11 @@ describe('WebhookController', () => {
       // Arrange
       const payload = createDefaultPayload();
 
-      // MySQL UNIQUE制約違反エラーをシミュレート
-      const duplicateError = new Error('Duplicate entry') as Error & { code: string };
-      duplicateError.code = 'ER_DUP_ENTRY';
+      // TypeORM QueryFailedError（MySQL UNIQUE制約違反）をシミュレート
+      const duplicateError = new Error('Duplicate entry') as Error & {
+        driverError: { code: string };
+      };
+      duplicateError.driverError = { code: 'ER_DUP_ENTRY' };
       mockProcessWebhookUseCase.execute.mockRejectedValue(duplicateError);
 
       // Act

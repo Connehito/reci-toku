@@ -6,7 +6,7 @@ import { WebhookController } from '../presenter/http/webhook/webhook.controller'
  * Webhook Module
  *
  * Webhook受信関連のUseCase、Controllerを管理
- * InfrastructureModule、RepositoryModuleから必要なサービスをインポート
+ * Webhook処理で利用するサービスは、@Global指定されたInfrastructureModule・RepositoryModuleから提供される
  */
 @Module({
   providers: [ProcessWebhookUseCase],

@@ -56,12 +56,15 @@ export class WebhookController {
         return { status: 'already_processed' };
       }
 
-      // べき等性（DB制約チェック）: UNIQUE制約違反の場合は200 OKを返す（レースコンディション対策）
+      // べき等性（DB制約チェック）: media_cashback_idのUNIQUE制約違反は200 OKを返す（レースコンディション対策）
       if (
         error &&
         typeof error === 'object' &&
-        'code' in error &&
-        (error.code === 'ER_DUP_ENTRY' || error.code === '23505')
+        'driverError' in error &&
+        error.driverError &&
+        typeof error.driverError === 'object' &&
+        'code' in error.driverError &&
+        (error.driverError.code === 'ER_DUP_ENTRY' || error.driverError.code === '23505')
       ) {
         this.logger.warn(
           `重複したWebhookを受信（DB制約）: cashbackId=${payload.media_cashback_id}`,
