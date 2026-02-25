@@ -63,7 +63,7 @@ export class GetCoinHistoryUseCase {
 
     // Domain EntityをDTOに変換
     const transactionItems: CoinHistoryItemDto[] = transactions.map((tx) => ({
-      id: tx.getId(),
+      id: tx.getId()!,
       amount: tx.getAmount(),
       balanceAfter: tx.getBalanceAfter(),
       transactionType: tx.getTransactionType(),
