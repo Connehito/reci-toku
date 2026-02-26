@@ -5,6 +5,7 @@ import { GetCoinBalanceUseCase } from '../../../usecase/coin/get-coin-balance.us
 import { GetCoinHistoryUseCase } from '../../../usecase/coin/get-coin-history.usecase';
 import { CoinBalanceResponseDto } from '../../../usecase/coin/dto/coin-balance-response.dto';
 import { InvalidUserIdError } from '../../../domain/exceptions/invalid-user-id.error';
+import { InvalidPaginationError } from '../../../domain/exceptions/invalid-pagination.error';
 import { CoinHistoryResponseDto } from '../../../usecase/coin/dto/coin-history-response.dto';
 
 describe('CoinController', () => {
@@ -190,7 +191,7 @@ describe('CoinController', () => {
       // Arrange
       const userId = 12345;
       mockGetCoinHistoryUseCase.execute.mockRejectedValue(
-        new Error('取得件数は1以上100以下である必要があります'),
+        new InvalidPaginationError('取得件数は1以上100以下である必要があります'),
       );
 
       // Act & Assert
@@ -201,7 +202,7 @@ describe('CoinController', () => {
       // Arrange
       const userId = 12345;
       mockGetCoinHistoryUseCase.execute.mockRejectedValue(
-        new Error('スキップ件数は0以上である必要があります'),
+        new InvalidPaginationError('スキップ件数は0以上である必要があります'),
       );
 
       // Act & Assert

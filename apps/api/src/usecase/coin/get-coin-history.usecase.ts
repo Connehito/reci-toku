@@ -3,6 +3,7 @@ import { TOKENS } from '../../domain/tokens';
 import { ICoinTransactionRepository } from '../../domain/repositories/coin-transaction.repository.interface';
 import { CoinHistoryResponseDto, CoinHistoryItemDto } from './dto/coin-history-response.dto';
 import { InvalidUserIdError } from '../../domain/exceptions/invalid-user-id.error';
+import { InvalidPaginationError } from '../../domain/exceptions/invalid-pagination.error';
 
 /**
  * コイン取引履歴照会UseCase
@@ -46,12 +47,12 @@ export class GetCoinHistoryUseCase {
 
     // limitのバリデーション
     if (limit <= 0 || limit > this.MAX_LIMIT) {
-      throw new Error(`取得件数は1以上${this.MAX_LIMIT}以下である必要があります`);
+      throw new InvalidPaginationError(`取得件数は1以上${this.MAX_LIMIT}以下である必要があります`);
     }
 
     // offsetのバリデーション
     if (offset < 0) {
-      throw new Error('スキップ件数は0以上である必要があります');
+      throw new InvalidPaginationError('スキップ件数は0以上である必要があります');
     }
 
     // 取引履歴取得（ページネーション）

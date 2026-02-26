@@ -4,6 +4,7 @@ import { TOKENS } from '../../domain/tokens';
 import { RepositoryMockFactory } from '../../__test__/factories/repository.mock.factory';
 import { EntityFactory } from '../../__test__/factories/entity.factory';
 import { InvalidUserIdError } from '../../domain/exceptions/invalid-user-id.error';
+import { InvalidPaginationError } from '../../domain/exceptions/invalid-pagination.error';
 
 // uuidをモック
 jest.mock('uuid', () => ({
@@ -170,33 +171,36 @@ describe('GetCoinHistoryUseCase', () => {
       expect(mockCoinTransactionRepository.findByUserIdWithPagination).not.toHaveBeenCalled();
     });
 
-    it('不正なlimit（0以下）の場合はエラーをスローする', async () => {
+    it('不正なlimit（0以下）の場合はInvalidPaginationErrorをスローする', async () => {
       // Arrange
       const userId = 12345;
 
       // Act & Assert
+      await expect(useCase.execute(userId, 0, 0)).rejects.toThrow(InvalidPaginationError);
       await expect(useCase.execute(userId, 0, 0)).rejects.toThrow(
         '取得件数は1以上100以下である必要があります',
       );
       expect(mockCoinTransactionRepository.findByUserIdWithPagination).not.toHaveBeenCalled();
     });
 
-    it('不正なlimit（101以上）の場合はエラーをスローする', async () => {
+    it('不正なlimit（101以上）の場合はInvalidPaginationErrorをスローする', async () => {
       // Arrange
       const userId = 12345;
 
       // Act & Assert
+      await expect(useCase.execute(userId, 101, 0)).rejects.toThrow(InvalidPaginationError);
       await expect(useCase.execute(userId, 101, 0)).rejects.toThrow(
         '取得件数は1以上100以下である必要があります',
       );
       expect(mockCoinTransactionRepository.findByUserIdWithPagination).not.toHaveBeenCalled();
     });
 
-    it('不正なoffset（負の値）の場合はエラーをスローする', async () => {
+    it('不正なoffset（負の値）の場合はInvalidPaginationErrorをスローする', async () => {
       // Arrange
       const userId = 12345;
 
       // Act & Assert
+      await expect(useCase.execute(userId, 20, -1)).rejects.toThrow(InvalidPaginationError);
       await expect(useCase.execute(userId, 20, -1)).rejects.toThrow(
         'スキップ件数は0以上である必要があります',
       );

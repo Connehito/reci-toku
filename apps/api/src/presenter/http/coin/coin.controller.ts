@@ -10,6 +10,7 @@ import {
 } from '@nestjs/common';
 import { GetCoinBalanceUseCase } from '../../../usecase/coin/get-coin-balance.usecase';
 import { InvalidUserIdError } from '../../../domain/exceptions/invalid-user-id.error';
+import { InvalidPaginationError } from '../../../domain/exceptions/invalid-pagination.error';
 import { GetCoinHistoryUseCase } from '../../../usecase/coin/get-coin-history.usecase';
 
 /**
@@ -90,10 +91,7 @@ export class CoinController {
         throw new BadRequestException(error.message);
       }
 
-      if (
-        error instanceof Error &&
-        (error.message.includes('取得件数') || error.message.includes('スキップ件数'))
-      ) {
+      if (error instanceof InvalidPaginationError) {
         throw new BadRequestException(error.message);
       }
 
