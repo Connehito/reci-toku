@@ -7,6 +7,7 @@ import { RepositoryModule } from './modules/repository.module';
 import { AuthModule } from './modules/auth.module';
 import { WebhookModule } from './modules/webhook.module';
 import { CoinModule } from './modules/coin.module';
+import { BatchModule } from './modules/batch.module';
 
 @Controller()
 class AppController {
@@ -25,6 +26,7 @@ class AppController {
     AuthModule, // 認証API
     WebhookModule, // Webhook受信API
     CoinModule, // コイン管理API
+    BatchModule, // バッチ処理
   ],
   controllers: [AppController],
 })
