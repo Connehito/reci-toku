@@ -1,4 +1,4 @@
-import { Injectable, Inject, Logger } from '@nestjs/common';
+import { Injectable, Inject } from '@nestjs/common';
 import { TOKENS } from '../../domain/tokens';
 import { ISecretsService } from '../../domain/services/secrets.service.interface';
 import { IEncryptionService } from '../../domain/services/encryption.service.interface';
@@ -16,8 +16,6 @@ import { InvalidUserIdError } from '../../domain/exceptions/invalid-user-id.erro
  */
 @Injectable()
 export class GenerateJweTokenUseCase {
-  private readonly logger = new Logger(GenerateJweTokenUseCase.name);
-
   constructor(
     @Inject(TOKENS.ISecretsService)
     private readonly secretsService: ISecretsService,
@@ -32,8 +30,6 @@ export class GenerateJweTokenUseCase {
    * @returns JWEトークン（文字列）
    */
   async execute(userId: number): Promise<string> {
-    this.logger.log(`JWEトークン生成開始: userId=${userId}`);
-
     // ユーザーIDのバリデーション
     if (!userId || userId <= 0) {
       throw new InvalidUserIdError(userId);
@@ -50,7 +46,6 @@ export class GenerateJweTokenUseCase {
     // JWE生成
     const jweToken = await this.encryptionService.encryptJWE(payload, clientId, encryptionKey);
 
-    this.logger.log(`JWEトークン生成成功: userId=${userId}`);
     return jweToken;
   }
 }
