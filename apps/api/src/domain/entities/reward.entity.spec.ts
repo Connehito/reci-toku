@@ -2,10 +2,9 @@ import { Reward } from './reward.entity';
 
 describe('Reward Entity', () => {
   describe('create', () => {
-    it('新しいRewardを作成できる', () => {
+    it('新しいRewardを作成できる（IDはnull）', () => {
       // Arrange
       const params = {
-        id: '1',
         userId: 100,
         campaignId: '200',
         mediaId: '300',
@@ -28,7 +27,7 @@ describe('Reward Entity', () => {
       const reward = Reward.create(params);
 
       // Assert
-      expect(reward.getId()).toBe('1');
+      expect(reward.getId()).toBeNull();
       expect(reward.getUserId()).toBe(100);
       expect(reward.getCampaignId()).toBe('200');
       expect(reward.getMediaId()).toBe('300');
@@ -74,7 +73,6 @@ describe('Reward Entity', () => {
     it('mediaCashbackIdが空の場合はエラーをスローする', () => {
       // Arrange
       const params = {
-        id: '1',
         userId: 100,
         campaignId: '200',
         mediaId: '300',
@@ -100,7 +98,6 @@ describe('Reward Entity', () => {
     it('mediaCashbackCodeが15桁でない場合はエラーをスローする', () => {
       // Arrange
       const params = {
-        id: '1',
         userId: 100,
         campaignId: '200',
         mediaId: '300',
@@ -126,7 +123,6 @@ describe('Reward Entity', () => {
     it('incentivePointsが0以下の場合はエラーをスローする', () => {
       // Arrange
       const params = {
-        id: '1',
         userId: 100,
         campaignId: '200',
         mediaId: '300',

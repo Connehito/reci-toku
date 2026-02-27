@@ -48,8 +48,9 @@ export class RewardRepository implements IRewardRepository {
     return RewardMapper.toDomainList(schemas);
   }
 
-  async save(reward: Reward): Promise<void> {
+  async save(reward: Reward): Promise<Reward> {
     const schema = RewardMapper.toSchema(reward);
-    await this.rewardSchemaRepository.save(schema);
+    const savedSchema = await this.rewardSchemaRepository.save(schema);
+    return RewardMapper.toDomain(savedSchema);
   }
 }

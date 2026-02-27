@@ -6,7 +6,7 @@
  */
 export class Campaign {
   private constructor(
-    private readonly id: string,
+    private readonly id: string | null,
     private readonly receiptCampaignId: string,
     private readonly receiptCampaignName: string,
     private readonly receiptCampaignImage: string | null,
@@ -40,7 +40,6 @@ export class Campaign {
    * 新規キャンペーンを作成
    */
   static create(params: {
-    id: string;
     receiptCampaignId: string;
     receiptCampaignName: string;
     receiptCampaignImage: string | null;
@@ -61,7 +60,7 @@ export class Campaign {
   }): Campaign {
     const now = new Date();
     return new Campaign(
-      params.id,
+      null,
       params.receiptCampaignId,
       params.receiptCampaignName,
       params.receiptCampaignImage,
@@ -229,7 +228,7 @@ export class Campaign {
   }
 
   // Getters
-  getId(): string {
+  getId(): string | null {
     return this.id;
   }
 

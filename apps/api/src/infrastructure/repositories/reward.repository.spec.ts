@@ -168,10 +168,9 @@ describe('RewardRepository', () => {
   });
 
   describe('save', () => {
-    it('報酬を保存できる', async () => {
+    it('報酬を保存し、DB採番されたIDを持つEntityを返却する', async () => {
       // Arrange
       const reward = Reward.create({
-        id: '1',
         userId: 100,
         campaignId: '200',
         mediaId: '300',
@@ -190,16 +189,38 @@ describe('RewardRepository', () => {
         jwePayload: 'jwe',
       });
 
-      mockRepository.save.mockResolvedValue({} as RewardSchema);
+      // TypeORM save()がAUTO_INCREMENT採番後のSchemaを返す想定
+      const savedSchema = new RewardSchema();
+      savedSchema.id = '42';
+      savedSchema.userId = 100;
+      savedSchema.campaignId = '200';
+      savedSchema.mediaId = '300';
+      savedSchema.mediaUserCode = 'USER123';
+      savedSchema.mediaCashbackId = 'CASHBACK456';
+      savedSchema.mediaCashbackCode = 'CODE12345678901';
+      savedSchema.receiptCampaignId = 'CAMPAIGN001';
+      savedSchema.receiptCampaignName = 'テストキャンペーン';
+      savedSchema.receiptCampaignImage = 'image.jpg';
+      savedSchema.companyId = 'COMPANY001';
+      savedSchema.companyName = 'テスト企業';
+      savedSchema.serviceType = 'RECEIPT';
+      savedSchema.incentivePoints = 500;
+      savedSchema.participationAt = new Date('2025-01-01');
+      savedSchema.processedAt = new Date('2025-01-02');
+      savedSchema.jwePayload = 'jwe';
+      savedSchema.createdAt = new Date('2025-01-01');
+      mockRepository.save.mockResolvedValue(savedSchema);
 
       // Act
-      await repository.save(reward);
+      const result = await repository.save(reward);
 
       // Assert
       expect(mockRepository.save).toHaveBeenCalled();
-      const savedSchema = mockRepository.save.mock.calls[0][0];
-      expect(savedSchema.id).toBe('1');
-      expect(savedSchema.userId).toBe(100);
+      const passedSchema = mockRepository.save.mock.calls[0][0];
+      expect(passedSchema.id).toBeUndefined(); // IDはnull → AUTO_INCREMENTに任せる
+      expect(passedSchema.userId).toBe(100);
+      expect(result).toBeInstanceOf(Reward);
+      expect(result.getId()).toBe('42');
     });
   });
 });

@@ -1,3 +1,5 @@
+import { InvalidUserIdError } from '../exceptions/invalid-user-id.error';
+
 /**
  * CoinTransaction - コイン取引履歴（ドメインエンティティ）
  *
@@ -11,7 +13,7 @@ export enum TransactionType {
 
 export class CoinTransaction {
   private constructor(
-    private readonly id: string,
+    private readonly id: string | null,
     private readonly userId: number,
     private readonly amount: number,
     private readonly balanceAfter: number,
@@ -28,7 +30,6 @@ export class CoinTransaction {
    * 報酬による付与トランザクションを作成
    */
   static createRewardTransaction(
-    id: string,
     userId: number,
     amount: number,
     balanceAfter: number,
@@ -41,7 +42,7 @@ export class CoinTransaction {
     }
 
     return new CoinTransaction(
-      id,
+      null,
       userId,
       amount,
       balanceAfter,
@@ -57,7 +58,6 @@ export class CoinTransaction {
    * 交換による消費トランザクションを作成
    */
   static createExchangeTransaction(
-    id: string,
     userId: number,
     amount: number,
     balanceAfter: number,
@@ -68,7 +68,7 @@ export class CoinTransaction {
     }
 
     return new CoinTransaction(
-      id,
+      null,
       userId,
       amount,
       balanceAfter,
@@ -84,7 +84,6 @@ export class CoinTransaction {
    * 失効トランザクションを作成
    */
   static createExpireTransaction(
-    id: string,
     userId: number,
     amount: number,
     balanceAfter: number,
@@ -95,7 +94,7 @@ export class CoinTransaction {
     }
 
     return new CoinTransaction(
-      id,
+      null,
       userId,
       amount,
       balanceAfter,
@@ -136,7 +135,7 @@ export class CoinTransaction {
 
   private validate(): void {
     if (this.userId <= 0) {
-      throw new Error('不正なユーザーIDです');
+      throw new InvalidUserIdError(this.userId);
     }
     if (this.balanceAfter < 0) {
       throw new Error('取引後残高は負の値にできません');
@@ -144,7 +143,7 @@ export class CoinTransaction {
   }
 
   // Getters
-  getId(): string {
+  getId(): string | null {
     return this.id;
   }
 

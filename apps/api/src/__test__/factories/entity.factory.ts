@@ -1,8 +1,7 @@
 import { UserCoin } from '../../domain/entities/user-coin.entity';
 import { Reward } from '../../domain/entities/reward.entity';
 import { Campaign } from '../../domain/entities/campaign.entity';
-import { CoinTransaction } from '../../domain/entities/coin-transaction.entity';
-import { v4 as uuidv4 } from 'uuid';
+import { CoinTransaction, TransactionType } from '../../domain/entities/coin-transaction.entity';
 
 /**
  * テストデータ作成の統一ファクトリー
@@ -41,11 +40,32 @@ export class EntityFactory {
   }
 
   /**
-   * Rewardテストデータを作成
+   * Rewardテストデータを作成（reconstruct経由でID付きデータを生成）
    */
-  static createReward(overrides: Partial<Parameters<typeof Reward.create>[0]> = {}): Reward {
+  static createReward(
+    overrides: Partial<{
+      id: string;
+      userId: number;
+      campaignId: string;
+      mediaId: string;
+      mediaUserCode: string;
+      mediaCashbackId: string;
+      mediaCashbackCode: string;
+      receiptCampaignId: string;
+      receiptCampaignName: string | null;
+      receiptCampaignImage: string | null;
+      companyId: string | null;
+      companyName: string | null;
+      serviceType: string | null;
+      incentivePoints: number;
+      participationAt: Date;
+      processedAt: Date;
+      jwePayload: string | null;
+      createdAt: Date;
+    }> = {},
+  ): Reward {
     const defaults = {
-      id: uuidv4(),
+      id: '1',
       userId: 12345,
       campaignId: '1',
       mediaId: 'media_001',
@@ -53,17 +73,39 @@ export class EntityFactory {
       mediaCashbackId: 'cashback_001',
       mediaCashbackCode: '123456789012345',
       receiptCampaignId: 'campaign_001',
-      receiptCampaignName: 'テストキャンペーン',
-      receiptCampaignImage: null,
-      companyId: null,
-      companyName: null,
-      serviceType: 'receipt',
+      receiptCampaignName: 'テストキャンペーン' as string | null,
+      receiptCampaignImage: null as string | null,
+      companyId: null as string | null,
+      companyName: null as string | null,
+      serviceType: 'receipt' as string | null,
       incentivePoints: 100,
       participationAt: new Date('2026-02-20T10:00:00Z'),
       processedAt: new Date('2026-02-20T10:00:00Z'),
-      jwePayload: '{}',
+      jwePayload: '{}' as string | null,
+      createdAt: new Date('2026-02-20T10:00:00Z'),
     };
-    return Reward.create({ ...defaults, ...overrides });
+    const params = { ...defaults, ...overrides };
+
+    return Reward.reconstruct(
+      params.id,
+      params.userId,
+      params.campaignId,
+      params.mediaId,
+      params.mediaUserCode,
+      params.mediaCashbackId,
+      params.mediaCashbackCode,
+      params.receiptCampaignId,
+      params.receiptCampaignName,
+      params.receiptCampaignImage,
+      params.companyId,
+      params.companyName,
+      params.serviceType,
+      params.incentivePoints,
+      params.participationAt,
+      params.processedAt,
+      params.jwePayload,
+      params.createdAt,
+    );
   }
 
   /**
@@ -160,7 +202,7 @@ export class EntityFactory {
   }
 
   /**
-   * CoinTransactionテストデータを作成（報酬付与）
+   * CoinTransactionテストデータを作成（報酬付与、reconstruct経由でID付きデータを生成）
    */
   static createRewardTransaction(
     overrides: Partial<{
@@ -171,32 +213,36 @@ export class EntityFactory {
       rewardId: string;
       mediaCashbackId: string;
       description: string;
+      createdAt: Date;
     }> = {},
   ): CoinTransaction {
     const defaults = {
-      id: uuidv4(),
+      id: '1',
       userId: 12345,
       amount: 100,
       balanceAfter: 100,
-      rewardId: uuidv4(),
-      mediaCashbackId: 'cashback_001',
-      description: 'テストキャンペーン参加',
+      rewardId: '1' as string | null,
+      mediaCashbackId: 'cashback_001' as string | null,
+      description: 'テストキャンペーン参加' as string | null,
+      createdAt: new Date('2026-02-20T10:00:00Z'),
     };
     const params = { ...defaults, ...overrides };
 
-    return CoinTransaction.createRewardTransaction(
+    return CoinTransaction.reconstruct(
       params.id,
       params.userId,
       params.amount,
       params.balanceAfter,
+      TransactionType.REWARD,
       params.rewardId,
       params.mediaCashbackId,
       params.description,
+      params.createdAt,
     );
   }
 
   /**
-   * CoinTransactionテストデータを作成（交換）
+   * CoinTransactionテストデータを作成（交換、reconstruct経由でID付きデータを生成）
    */
   static createExchangeTransaction(
     overrides: Partial<{
@@ -205,28 +251,34 @@ export class EntityFactory {
       amount: number;
       balanceAfter: number;
       description: string;
+      createdAt: Date;
     }> = {},
   ): CoinTransaction {
     const defaults = {
-      id: uuidv4(),
+      id: '2',
       userId: 12345,
       amount: -50,
       balanceAfter: 50,
-      description: 'テスト商品と交換',
+      description: 'テスト商品と交換' as string | null,
+      createdAt: new Date('2026-02-20T10:00:00Z'),
     };
     const params = { ...defaults, ...overrides };
 
-    return CoinTransaction.createExchangeTransaction(
+    return CoinTransaction.reconstruct(
       params.id,
       params.userId,
       params.amount,
       params.balanceAfter,
+      TransactionType.EXCHANGE,
+      null,
+      null,
       params.description,
+      params.createdAt,
     );
   }
 
   /**
-   * CoinTransactionテストデータを作成（失効）
+   * CoinTransactionテストデータを作成（失効、reconstruct経由でID付きデータを生成）
    */
   static createExpireTransaction(
     overrides: Partial<{
@@ -235,23 +287,29 @@ export class EntityFactory {
       amount: number;
       balanceAfter: number;
       description: string;
+      createdAt: Date;
     }> = {},
   ): CoinTransaction {
     const defaults = {
-      id: uuidv4(),
+      id: '3',
       userId: 12345,
       amount: -100,
       balanceAfter: 0,
-      description: '有効期限切れ',
+      description: '有効期限切れ' as string | null,
+      createdAt: new Date('2026-02-20T10:00:00Z'),
     };
     const params = { ...defaults, ...overrides };
 
-    return CoinTransaction.createExpireTransaction(
+    return CoinTransaction.reconstruct(
       params.id,
       params.userId,
       params.amount,
       params.balanceAfter,
+      TransactionType.EXPIRE,
+      null,
+      null,
       params.description,
+      params.createdAt,
     );
   }
 }

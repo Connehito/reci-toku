@@ -2,10 +2,9 @@ import { CoinTransaction, TransactionType } from './coin-transaction.entity';
 
 describe('CoinTransaction Entity', () => {
   describe('createRewardTransaction', () => {
-    it('REWARDタイプのトランザクションを作成できる', () => {
+    it('REWARDタイプのトランザクションを作成できる（IDはnull）', () => {
       // Act
       const transaction = CoinTransaction.createRewardTransaction(
-        '1',
         100,
         500,
         1500,
@@ -15,7 +14,7 @@ describe('CoinTransaction Entity', () => {
       );
 
       // Assert
-      expect(transaction.getId()).toBe('1');
+      expect(transaction.getId()).toBeNull();
       expect(transaction.getUserId()).toBe(100);
       expect(transaction.getAmount()).toBe(500);
       expect(transaction.getBalanceAfter()).toBe(1500);
@@ -29,20 +28,19 @@ describe('CoinTransaction Entity', () => {
     it('amountが0以下の場合はエラーをスローする', () => {
       // Act & Assert
       expect(() =>
-        CoinTransaction.createRewardTransaction('1', 100, 0, 1000, '200', 'CASHBACK123', '説明'),
+        CoinTransaction.createRewardTransaction(100, 0, 1000, '200', 'CASHBACK123', '説明'),
       ).toThrow('報酬の付与額は正の値である必要があります');
 
       expect(() =>
-        CoinTransaction.createRewardTransaction('1', 100, -100, 1000, '200', 'CASHBACK123', '説明'),
+        CoinTransaction.createRewardTransaction(100, -100, 1000, '200', 'CASHBACK123', '説明'),
       ).toThrow('報酬の付与額は正の値である必要があります');
     });
   });
 
   describe('createExchangeTransaction', () => {
-    it('EXCHANGEタイプのトランザクションを作成できる', () => {
+    it('EXCHANGEタイプのトランザクションを作成できる（IDはnull）', () => {
       // Act
       const transaction = CoinTransaction.createExchangeTransaction(
-        '2',
         100,
         -1000,
         500,
@@ -50,7 +48,7 @@ describe('CoinTransaction Entity', () => {
       );
 
       // Assert
-      expect(transaction.getId()).toBe('2');
+      expect(transaction.getId()).toBeNull();
       expect(transaction.getUserId()).toBe(100);
       expect(transaction.getAmount()).toBe(-1000);
       expect(transaction.getBalanceAfter()).toBe(500);
@@ -62,21 +60,20 @@ describe('CoinTransaction Entity', () => {
 
     it('amountが0以上の場合はエラーをスローする', () => {
       // Act & Assert
-      expect(() => CoinTransaction.createExchangeTransaction('2', 100, 0, 500, '説明')).toThrow(
+      expect(() => CoinTransaction.createExchangeTransaction(100, 0, 500, '説明')).toThrow(
         '交換の消費額は負の値である必要があります',
       );
 
-      expect(() => CoinTransaction.createExchangeTransaction('2', 100, 100, 500, '説明')).toThrow(
+      expect(() => CoinTransaction.createExchangeTransaction(100, 100, 500, '説明')).toThrow(
         '交換の消費額は負の値である必要があります',
       );
     });
   });
 
   describe('createExpireTransaction', () => {
-    it('EXPIREタイプのトランザクションを作成できる', () => {
+    it('EXPIREタイプのトランザクションを作成できる（IDはnull）', () => {
       // Act
       const transaction = CoinTransaction.createExpireTransaction(
-        '3',
         100,
         -200,
         0,
@@ -84,7 +81,7 @@ describe('CoinTransaction Entity', () => {
       );
 
       // Assert
-      expect(transaction.getId()).toBe('3');
+      expect(transaction.getId()).toBeNull();
       expect(transaction.getUserId()).toBe(100);
       expect(transaction.getAmount()).toBe(-200);
       expect(transaction.getBalanceAfter()).toBe(0);
@@ -96,11 +93,11 @@ describe('CoinTransaction Entity', () => {
 
     it('amountが0以上の場合はエラーをスローする', () => {
       // Act & Assert
-      expect(() => CoinTransaction.createExpireTransaction('3', 100, 0, 0, '説明')).toThrow(
+      expect(() => CoinTransaction.createExpireTransaction(100, 0, 0, '説明')).toThrow(
         '失効額は負の値である必要があります',
       );
 
-      expect(() => CoinTransaction.createExpireTransaction('3', 100, 100, 0, '説明')).toThrow(
+      expect(() => CoinTransaction.createExpireTransaction(100, 100, 0, '説明')).toThrow(
         '失効額は負の値である必要があります',
       );
     });

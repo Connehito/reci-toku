@@ -1,3 +1,5 @@
+import { InvalidUserIdError } from '../exceptions/invalid-user-id.error';
+
 /**
  * Reward - 報酬履歴（ドメインエンティティ）
  *
@@ -6,7 +8,7 @@
  */
 export class Reward {
   private constructor(
-    private readonly id: string,
+    private readonly id: string | null,
     private readonly userId: number,
     private readonly campaignId: string,
     private readonly mediaId: string,
@@ -32,7 +34,6 @@ export class Reward {
    * 新規報酬を作成
    */
   static create(params: {
-    id: string;
     userId: number;
     campaignId: string;
     mediaId: string;
@@ -51,7 +52,7 @@ export class Reward {
     jwePayload: string | null;
   }): Reward {
     return new Reward(
-      params.id,
+      null,
       params.userId,
       params.campaignId,
       params.mediaId,
@@ -119,7 +120,7 @@ export class Reward {
 
   private validate(): void {
     if (this.userId <= 0) {
-      throw new Error('不正なユーザーIDです');
+      throw new InvalidUserIdError(this.userId);
     }
     if (this.incentivePoints <= 0) {
       throw new Error('付与ポイントは正の値である必要があります');
@@ -133,7 +134,7 @@ export class Reward {
   }
 
   // Getters
-  getId(): string {
+  getId(): string | null {
     return this.id;
   }
 

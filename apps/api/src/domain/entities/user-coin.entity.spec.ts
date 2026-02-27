@@ -1,4 +1,5 @@
 import { UserCoin } from './user-coin.entity';
+import { InvalidUserIdError } from '../exceptions/invalid-user-id.error';
 
 describe('UserCoin Entity', () => {
   describe('create', () => {
@@ -16,8 +17,8 @@ describe('UserCoin Entity', () => {
 
     it('userIdが0以下の場合はエラーをスローする', () => {
       // Act & Assert
-      expect(() => UserCoin.create(0)).toThrow('不正なユーザーIDです');
-      expect(() => UserCoin.create(-1)).toThrow('不正なユーザーIDです');
+      expect(() => UserCoin.create(0)).toThrow(InvalidUserIdError);
+      expect(() => UserCoin.create(-1)).toThrow(InvalidUserIdError);
     });
   });
 

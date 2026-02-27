@@ -26,6 +26,6 @@ module.exports = {
     '^src/(.*)$': '<rootDir>/src/$1',
   },
   transformIgnorePatterns: [
-    'node_modules/(?!(jose)/)', // joseライブラリをトランスパイル対象に含める
+    'node_modules/(?!(jose|uuid)/)', // jose, uuidライブラリをトランスパイル対象に含める
   ],
 };

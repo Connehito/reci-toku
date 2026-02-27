@@ -274,10 +274,9 @@ describe('CampaignRepository', () => {
   });
 
   describe('save', () => {
-    it('新規キャンペーンを保存できる', async () => {
+    it('新規キャンペーンを保存できる（IDはAUTO_INCREMENTに任せる）', async () => {
       // Arrange
       const campaign = Campaign.create({
-        id: '1',
         receiptCampaignId: 'CAMPAIGN001',
         receiptCampaignName: 'テストキャンペーン',
         receiptCampaignImage: 'image.jpg',
@@ -305,7 +304,7 @@ describe('CampaignRepository', () => {
       // Assert
       expect(mockRepository.save).toHaveBeenCalled();
       const savedSchema = mockRepository.save.mock.calls[0][0];
-      expect(savedSchema.id).toBe('1');
+      expect(savedSchema.id).toBeUndefined(); // IDはnull → AUTO_INCREMENTに任せる
       expect(savedSchema.receiptCampaignId).toBe('CAMPAIGN001');
       expect(savedSchema.title).toBe('ママリ表示タイトル');
     });
