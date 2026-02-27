@@ -63,9 +63,16 @@ export class ExpireCoinsUseCase {
       const userId = userCoin.getUserId();
       try {
         const expiredAmount = await this.transactionManager.execute(async (uow) => {
+          // トランザクション内で最新状態を再確認（Race Condition対策）
+          const latestUserCoin = await uow.userCoinRepository.findByUserId(userId);
+          if (!latestUserCoin || latestUserCoin.getBalance() === 0) {
+            this.logger.debug(`失効スキップ（残高0）: userId=${userId}`);
+            return 0;
+          }
+
           // コイン残高を0にして失効額を取得
-          const amount = userCoin.expire();
-          await uow.userCoinRepository.save(userCoin);
+          const amount = latestUserCoin.expire();
+          await uow.userCoinRepository.save(latestUserCoin);
 
           // 失効トランザクション記録
           const transaction = CoinTransaction.createExpireTransaction(
@@ -79,9 +86,11 @@ export class ExpireCoinsUseCase {
           return amount;
         });
 
-        totalProcessed++;
-        totalExpired += expiredAmount;
-        this.logger.log(`コイン失効成功: userId=${userId}, amount=${expiredAmount}`);
+        if (expiredAmount > 0) {
+          totalProcessed++;
+          totalExpired += expiredAmount;
+        }
+        this.logger.debug(`コイン失効成功: userId=${userId}, amount=${expiredAmount}`);
       } catch (error) {
         totalFailed++;
         failedUserIds.push(userId);
@@ -98,7 +107,7 @@ export class ExpireCoinsUseCase {
     );
 
     if (totalFailed > 0) {
-      this.logger.warn(`失敗ユーザーID: [${failedUserIds.join(', ')}]`);
+      this.logger.warn(`失敗ユーザー数: ${totalFailed}`);
     }
 
     return {

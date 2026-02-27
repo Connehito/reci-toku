@@ -76,6 +76,8 @@ describe('ExpireCoinsUseCase', () => {
 
       mockCoinSettingRepository.findByKey.mockResolvedValue(coinSetting);
       mockUserCoinRepository.findExpiredCoins.mockResolvedValue([expiredUserCoin]);
+      // トランザクション内でfindByUserIdが最新状態を返す
+      uowUserCoinRepository.findByUserId.mockResolvedValue(expiredUserCoin);
 
       // Act
       const result = await useCase.execute();
@@ -89,6 +91,7 @@ describe('ExpireCoinsUseCase', () => {
       expect(mockCoinSettingRepository.findByKey).toHaveBeenCalledWith('coin_expire_days');
       expect(mockUserCoinRepository.findExpiredCoins).toHaveBeenCalledWith(180);
       expect(mockTransactionManager.execute).toHaveBeenCalledTimes(1);
+      expect(uowUserCoinRepository.findByUserId).toHaveBeenCalledWith(12345);
       expect(uowUserCoinRepository.save).toHaveBeenCalledTimes(1);
       expect(uowCoinTransactionRepository.save).toHaveBeenCalledTimes(1);
     });
@@ -113,6 +116,11 @@ describe('ExpireCoinsUseCase', () => {
 
       mockCoinSettingRepository.findByKey.mockResolvedValue(null); // デフォルト使用
       mockUserCoinRepository.findExpiredCoins.mockResolvedValue([userCoin1, userCoin2, userCoin3]);
+      // トランザクション内でfindByUserIdが各ユーザーを返す
+      uowUserCoinRepository.findByUserId
+        .mockResolvedValueOnce(userCoin1)
+        .mockResolvedValueOnce(userCoin2)
+        .mockResolvedValueOnce(userCoin3);
 
       // Act
       const result = await useCase.execute();
@@ -183,9 +191,13 @@ describe('ExpireCoinsUseCase', () => {
           if (callCount === 2) {
             return Promise.reject(new Error('Database connection failed'));
           }
+          // findByUserIdが対応するユーザーコインを返すようにモックを作成
+          const localUowUserCoinRepo = RepositoryMockFactory.createUserCoinRepositoryMock();
+          const targetCoin = callCount === 1 ? userCoin1 : userCoin3;
+          localUowUserCoinRepo.findByUserId.mockResolvedValue(targetCoin);
           const uow: UnitOfWork = {
             rewardRepository: RepositoryMockFactory.createRewardRepositoryMock(),
-            userCoinRepository: uowUserCoinRepository,
+            userCoinRepository: localUowUserCoinRepo,
             coinTransactionRepository: uowCoinTransactionRepository,
           };
           return work(uow);
@@ -202,6 +214,57 @@ describe('ExpireCoinsUseCase', () => {
       expect(mockTransactionManager.execute).toHaveBeenCalledTimes(3); // 3回とも呼ばれる
     });
 
+    it('トランザクション内で残高0になっていたらスキップする（Race Condition対策）', async () => {
+      // Arrange
+      const expiredUserCoin = EntityFactory.createUserCoin({
+        userId: 12345,
+        balance: 500,
+        lastEarnedAt: new Date('2025-06-01T00:00:00Z'),
+      });
+      const alreadyExpiredUserCoin = EntityFactory.createUserCoin({
+        userId: 12345,
+        balance: 0,
+        lastEarnedAt: new Date('2025-06-01T00:00:00Z'),
+      });
+
+      mockCoinSettingRepository.findByKey.mockResolvedValue(null);
+      mockUserCoinRepository.findExpiredCoins.mockResolvedValue([expiredUserCoin]);
+      // トランザクション内では既に残高0（他のプロセスが先に失効済み）
+      uowUserCoinRepository.findByUserId.mockResolvedValue(alreadyExpiredUserCoin);
+
+      // Act
+      const result = await useCase.execute();
+
+      // Assert
+      expect(result.totalProcessed).toBe(0);
+      expect(result.totalExpired).toBe(0);
+      expect(result.totalFailed).toBe(0);
+      expect(uowUserCoinRepository.save).not.toHaveBeenCalled();
+      expect(uowCoinTransactionRepository.save).not.toHaveBeenCalled();
+    });
+
+    it('トランザクション内でユーザーが見つからない場合はスキップする', async () => {
+      // Arrange
+      const expiredUserCoin = EntityFactory.createUserCoin({
+        userId: 12345,
+        balance: 500,
+        lastEarnedAt: new Date('2025-06-01T00:00:00Z'),
+      });
+
+      mockCoinSettingRepository.findByKey.mockResolvedValue(null);
+      mockUserCoinRepository.findExpiredCoins.mockResolvedValue([expiredUserCoin]);
+      // トランザクション内でユーザーが見つからない
+      uowUserCoinRepository.findByUserId.mockResolvedValue(null);
+
+      // Act
+      const result = await useCase.execute();
+
+      // Assert
+      expect(result.totalProcessed).toBe(0);
+      expect(result.totalExpired).toBe(0);
+      expect(uowUserCoinRepository.save).not.toHaveBeenCalled();
+    });
+
     it('失効トランザクションが正しい値で作成される', async () => {
       // Arrange
       const expiredUserCoin = EntityFactory.createUserCoin({
@@ -212,6 +275,7 @@ describe('ExpireCoinsUseCase', () => {
 
       mockCoinSettingRepository.findByKey.mockResolvedValue(null);
       mockUserCoinRepository.findExpiredCoins.mockResolvedValue([expiredUserCoin]);
+      uowUserCoinRepository.findByUserId.mockResolvedValue(expiredUserCoin);
 
       // Act
       await useCase.execute();
@@ -240,6 +304,7 @@ describe('ExpireCoinsUseCase', () => {
 
       mockCoinSettingRepository.findByKey.mockResolvedValue(null);
       mockUserCoinRepository.findExpiredCoins.mockResolvedValue([expiredUserCoin]);
+      uowUserCoinRepository.findByUserId.mockResolvedValue(expiredUserCoin);
 
       // Act
       await useCase.execute();
@@ -249,6 +314,7 @@ describe('ExpireCoinsUseCase', () => {
 
       // Assert - トランザクション内ではUnitOfWork経由のリポジトリが使われる
       expect(mockTransactionManager.execute).toHaveBeenCalledTimes(1);
+      expect(uowUserCoinRepository.findByUserId).toHaveBeenCalledWith(12345);
       expect(uowUserCoinRepository.save).toHaveBeenCalledTimes(1);
       expect(uowCoinTransactionRepository.save).toHaveBeenCalledTimes(1);
 
