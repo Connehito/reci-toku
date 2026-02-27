@@ -57,6 +57,7 @@ export class WebhookController {
       }
 
       // べき等性（DB制約チェック）: media_cashback_idのUNIQUE制約違反は200 OKを返す（レースコンディション対策）
+      // 他テーブルのDUP_ENTRYは500で返しPMNにリトライさせる（コイン消失防止）
       if (
         error &&
         typeof error === 'object' &&
@@ -64,7 +65,10 @@ export class WebhookController {
         error.driverError &&
         typeof error.driverError === 'object' &&
         'code' in error.driverError &&
-        (error.driverError.code === 'ER_DUP_ENTRY' || error.driverError.code === '23505')
+        (error.driverError.code === 'ER_DUP_ENTRY' || error.driverError.code === '23505') &&
+        'message' in error.driverError &&
+        typeof error.driverError.message === 'string' &&
+        error.driverError.message.includes('media_cashback_id')
       ) {
         this.logger.warn(
           `重複したWebhookを受信（DB制約）: cashbackId=${payload.media_cashback_id}`,

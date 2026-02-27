@@ -82,15 +82,18 @@ describe('WebhookController', () => {
       expect(mockProcessWebhookUseCase.execute).toHaveBeenCalledWith(payload);
     });
 
-    it('重複ペイロード（DB制約エラー）で200 OKとalready_processedを返す', async () => {
+    it('重複ペイロード（DB制約エラー: media_cashback_id）で200 OKとalready_processedを返す', async () => {
       // Arrange
       const payload = createDefaultPayload();
 
-      // TypeORM QueryFailedError（MySQL UNIQUE制約違反）をシミュレート
+      // TypeORM QueryFailedError（media_cashback_idのUNIQUE制約違反）をシミュレート
       const duplicateError = new Error('Duplicate entry') as Error & {
-        driverError: { code: string };
+        driverError: { code: string; message: string };
       };
-      duplicateError.driverError = { code: 'ER_DUP_ENTRY' };
+      duplicateError.driverError = {
+        code: 'ER_DUP_ENTRY',
+        message: "Duplicate entry 'unique_001' for key 'idx_media_cashback_id'",
+      };
       mockProcessWebhookUseCase.execute.mockRejectedValue(duplicateError);
 
       // Act
@@ -99,6 +102,24 @@ describe('WebhookController', () => {
       // Assert
       expect(response).toEqual({ status: 'already_processed' });
       expect(mockProcessWebhookUseCase.execute).toHaveBeenCalledWith(payload);
+    });
+
+    it('他テーブルのDB制約エラーは500を返す（コイン消失防止）', async () => {
+      // Arrange
+      const payload = createDefaultPayload();
+
+      // user_coinsのPK重複（同一新規ユーザーへの同時Webhook）をシミュレート
+      const duplicateError = new Error('Duplicate entry') as Error & {
+        driverError: { code: string; message: string };
+      };
+      duplicateError.driverError = {
+        code: 'ER_DUP_ENTRY',
+        message: "Duplicate entry '12345' for key 'PRIMARY'",
+      };
+      mockProcessWebhookUseCase.execute.mockRejectedValue(duplicateError);
+
+      // Act & Assert - 500エラーとして再スロー（PMNがリトライする）
+      await expect(controller.handleWebhook(payload)).rejects.toThrow();
     });
 
     it('キャンペーン未登録で400 Bad Requestを返す', async () => {
